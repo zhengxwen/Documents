@@ -56,7 +56,7 @@ sample.fn <- "relationships_w_pops_121708.txt"
 download.file(file.path(FTP_BASE, FTP_SAMP_PATH, sample.fn), sample.fn)
 
 head(read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE))
-
+#    FID     IID     dad     mom sex pheno population
 
 
 #########################################################################
@@ -218,12 +218,16 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 # Add sample.annotation
 
 dat <- read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE)
+names(dat) <- c("FID", "IID", "father", "mother", "sex", "phenotype", "population")
 dat$sex[dat$sex==1] <- "M"
 dat$sex[dat$sex==2] <- "F"
 dat <- dat[match(sample.id, dat$IID),
-	c("FID", "IID", "dad", "mom", "sex", "population")]
+	c("FID", "IID", "father", "mother", "sex", "population")]
 table(dat$population, exclude=NULL)
 add.gdsn(newfile, "sample.annot", dat, compress="ZIP_RA.max", closezip=TRUE)
+
+# show
+newfile
 
 # Close the GDS file
 closefn.gds(newfile)
@@ -245,3 +249,4 @@ snpgdsSummary(gds.fn)
 sessionInfo()
 
 q("no")
+

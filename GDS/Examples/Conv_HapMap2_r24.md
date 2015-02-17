@@ -76,6 +76,9 @@ head(read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE))
 ```
 
 ```r
+#    FID     IID     dad     mom sex pheno population
+
+
 #########################################################################
 ##  Get HapMap individual IDs
 
@@ -578,10 +581,11 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 # Add sample.annotation
 
 dat <- read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE)
+names(dat) <- c("FID", "IID", "father", "mother", "sex", "phenotype", "population")
 dat$sex[dat$sex==1] <- "M"
 dat$sex[dat$sex==2] <- "F"
 dat <- dat[match(sample.id, dat$IID),
-	c("FID", "IID", "dad", "mom", "sex", "population")]
+	c("FID", "IID", "father", "mother", "sex", "population")]
 table(dat$population, exclude=NULL)
 ```
 
@@ -594,6 +598,30 @@ table(dat$population, exclude=NULL)
 ```r
 add.gdsn(newfile, "sample.annot", dat, compress="ZIP_RA.max", closezip=TRUE)
 
+# show
+newfile
+```
+
+```
+## File: /home/postdoc/zhengx/my/CreateGDS/HapMap2_r24_nr_b36_fwd.gds
+## +    [  ] *
+## |--+ sample.id   { VStr8 270 ZIP_RA(26.06%) }
+## |--+ snp.id   { Int32 3735292 ZIP_RA(34.48%) }
+## |--+ snp.rs.id   { VStr8 3735292 ZIP_RA(32.93%) }
+## |--+ snp.chromosome   { VStr8 3735292 ZIP_RA(0.09%) }
+## |--+ snp.position   { Int32 3735292 ZIP_RA(73.35%) }
+## |--+ snp.allele   { VStr8 3735292 ZIP_RA(10.36%) }
+## |--+ genotype   { Bit2 270x3735292 ZIP_RA(39.10%) } *
+## |--+ sample.annot   [ data.frame ] *
+## |  |--+ FID   { VStr8 270 ZIP_RA(23.46%) }
+## |  |--+ IID   { VStr8 270 ZIP_RA(26.06%) }
+## |  |--+ father   { VStr8 270 ZIP_RA(23.89%) }
+## |  |--+ mother   { VStr8 270 ZIP_RA(23.22%) }
+## |  |--+ sex   { VStr8 270 ZIP_RA(18.89%) }
+## |  |--+ population   { VStr8 270 ZIP_RA(4.63%) }
+```
+
+```r
 # Close the GDS file
 closefn.gds(newfile)
 
@@ -602,10 +630,10 @@ cleanup.gds(gds.fn)
 
 ```
 ## Clean up the fragments of GDS file:
-## 	open the file "HapMap2_r24_nr_b36_fwd.gds" (size: 128988203).
-## 	# of fragments in total: 174.
+## 	open the file "HapMap2_r24_nr_b36_fwd.gds" (size: 128988269).
+## 	# of fragments in total: 179.
 ## 	save it to "HapMap2_r24_nr_b36_fwd.gds.tmp".
-## 	rename "HapMap2_r24_nr_b36_fwd.gds.tmp" (size: 128986451).
+## 	rename "HapMap2_r24_nr_b36_fwd.gds.tmp" (size: 128986457).
 ## 	# of fragments in total: 28.
 ```
 
