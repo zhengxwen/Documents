@@ -1,8 +1,8 @@
 #########################################################################
 ##
-##  Convert HapMap2_r24 Genotypes to GDS Format
-##  File: Conv_HapMap2_r24.R
-##  Output: HapMap2_r24_nr_b36_fwd.gds
+##  Convert HapMap3_r3 Genotypes to GDS Format
+##  File: Conv_HapMap3_r3.R
+##  Output: HapMap3_r3_b36_fwd_consensus_qc_poly.gds
 ##
 
 library(gdsfmt)
@@ -10,7 +10,7 @@ library(SNPRelate)
 
 
 # file name template
-FILE_TEMPLATE <- "genotypes_chr%s_%s_r24_nr.b36_fwd.txt.gz"
+FILE_TEMPLATE <- "genotypes_chr%s_%s_phase3.3_consensus.b36_fwd.txt.gz"
 
 
 
@@ -18,8 +18,8 @@ FILE_TEMPLATE <- "genotypes_chr%s_%s_r24_nr.b36_fwd.txt.gz"
 ##  Download the gz files from HapMap Website
 
 FTP_BASE <- "ftp://ftp.ncbi.nlm.nih.gov/hapmap/"
-FTP_GENO_PATH <- "genotypes/2008-10_phaseII/fwd_strand/non-redundant"
-POP_LIST <- c("CEU", "JPT+CHB", "YRI")
+FTP_GENO_PATH <- "genotypes/2010-05_phaseIII/hapmap_format/consensus"
+POP_LIST <- c("ASW", "CEU", "CHB", "CHD", "GIH", "JPT", "LWK", "MEX", "MKK", "TSI", "YRI")
 
 for (chr.id in c(1:22, "X", "Y", "M"))
 {
@@ -52,8 +52,8 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 
 
 # download the sample annotation file
-FTP_SAMP_PATH <- "samples_individuals"
-sample.fn <- "relationships_w_pops_121708.txt"
+FTP_SAMP_PATH <- "genotypes/2010-05_phaseIII"
+sample.fn <- "relationships_w_pops_041510.txt"
 download.file(file.path(FTP_BASE, FTP_SAMP_PATH, sample.fn), sample.fn)
 
 head(read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE))
@@ -93,7 +93,7 @@ for (chr.id in c(2:22, "X", "Y", "M"))
 ##  Create GDS file
 
 # Create a new GDS file
-gds.fn <- "HapMap2_r24_nr_b36_fwd.gds"
+gds.fn <- "HapMap3_r3_b36_fwd_consensus_qc_poly.gds"
 newfile <- createfn.gds(gds.fn)
 
 # Add a format flag
@@ -126,7 +126,7 @@ n.int <- 0L
 cat("Starting ...\n")
 
 # Write SNPs into the GDS file
-for (chr.id in c(1:22, "X", "Y", "M"))
+for (chr.id in c(1:22, "X", "Y"))
 {
 	# load data
 	dat <- list()
@@ -139,14 +139,14 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 		cat(",", dim(dat[[pop]]), "\n")
 
 		# detect and remove non-standard alleles
-		allele <- dat[[pop]]$SNPalleles
+		allele <- dat[[pop]]$alleles
 		s <- strsplit(allele, "/")
 		flag <- sapply(s, function(x)
 			(length(x)==2L) & all(x %in% c("A", "G", "C", "T")))
 		if (sum(!flag) > 0)
 		{
 			dat[[pop]] <- dat[[pop]][flag, ]
-			allele <- dat[[pop]]$SNPalleles
+			allele <- dat[[pop]]$alleles
 			cat(sprintf("\t%s: remove non-standard alleles (%d)\n",
 				pop, sum(!flag)))
 		}
@@ -172,12 +172,8 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 	# check RS ID
 	for (pop in POP_LIST)
 	{
-		flag <- duplicated(dat[[pop]]$rs.)
-		if (any(flag))
-		{
-			dat[[pop]] <- dat[[pop]][!flag, ]
-			cat("\tRS IDs in Population", pop, "are not unique.\n")
-		}
+		if (any(duplicated(dat[[pop]]$rs.)))
+			stop("RS IDs in Population ", pop, " are not unique.")
 	}
 	common.rs. <- dat[[POP_LIST[1]]]$rs.
 	for (pop in POP_LIST[-1])
@@ -190,11 +186,11 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 	}
 
 	# check alleles
-	allele <- dat[[POP_LIST[1]]]$SNPalleles
+	allele <- dat[[POP_LIST[1]]]$alleles
 	flag <- rep(TRUE, length(allele))
 	for (pop in POP_LIST[-1])
 	{
-		flag <- flag & (allele == dat[[pop]]$SNPalleles)
+		flag <- flag & (allele == dat[[pop]]$alleles)
 	}
 	cat("\tAllele Intersect:", sum(flag), "\n")
 	for (pop in POP_LIST)
@@ -216,7 +212,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 	append.gdsn(var.pos, dat[[1]]$pos)
 
 	# snp.allele
-	allele <- dat[[1]]$SNPalleles
+	allele <- dat[[1]]$alleles
 	append.gdsn(var.allele, allele)
 
 	s <- strsplit(allele, "/")
