@@ -26,10 +26,11 @@ FILE_TEMPLATE <- "genotypes_chr%s_%s_r24_nr.b36_fwd.txt.gz"
 
 FTP_BASE <- "ftp://ftp.ncbi.nlm.nih.gov/hapmap/"
 FTP_GENO_PATH <- "genotypes/2008-10_phaseII/fwd_strand/non-redundant"
+POP_LIST <- c("CEU", "JPT+CHB", "YRI")
 
 for (chr.id in c(1:22, "X", "Y", "M"))
 {
-	for (pop in c("CEU", "JPT+CHB", "YRI"))
+	for (pop in POP_LIST)
 	{
 		fn <- sprintf(FILE_TEMPLATE, chr.id, pop)
 		ftp.fn <- file.path(FTP_BASE, FTP_GENO_PATH, fn)
@@ -85,7 +86,7 @@ head(read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE))
 SampID_File <- function(chr.id)
 {
 	ans <- c()
-	for (pop in c("CEU", "JPT+CHB", "YRI"))
+	for (pop in POP_LIST)
 	{
 		fn <- sprintf(FILE_TEMPLATE, "1", pop)
 		tab <- read.table(fn, header=TRUE, comment.char="",
@@ -180,63 +181,95 @@ cat("Starting ...\n")
 # Write SNPs into the GDS file
 for (chr.id in c(1:22, "X", "Y", "M"))
 {
-	v <- list()
-	for (pop in c("CEU", "JPT+CHB", "YRI"))
+	# load data
+	dat <- list()
+	for (pop in POP_LIST)
 	{
 		fn <- sprintf(FILE_TEMPLATE, chr.id, pop)
 		cat("Read:", fn)
-		v[[pop]] <- read.table(fn, header=TRUE, comment.char="",
+		dat[[pop]] <- read.table(fn, header=TRUE, comment.char="",
 			stringsAsFactors=FALSE)
-		cat(",", dim(v[[pop]]), "\n")
+		cat(",", dim(dat[[pop]]), "\n")
+
+		# detect and remove non-standard alleles
+		allele <- dat[[pop]]$SNPalleles
+		s <- strsplit(allele, "/")
+		flag <- sapply(s, function(x)
+			(length(x)==2L) & all(x %in% c("A", "G", "C", "T")))
+		if (sum(!flag) > 0)
+		{
+			dat[[pop]] <- dat[[pop]][flag, ]
+			allele <- dat[[pop]]$SNPalleles
+			cat(sprintf("\t%s: remove non-standard alleles (%d)\n",
+				pop, sum(!flag)))
+		}
 	}
 
-	common.pos <- intersect(v[["CEU"]]$pos, v[["JPT+CHB"]]$pos)
-	common.pos <- intersect(common.pos, v[["YRI"]]$pos)
+	# check position
+	for (pop in POP_LIST)
+	{
+		if (any(duplicated(dat[[pop]]$pos)))
+			stop("Positions in Population ", pop, " are not unique.")
+	}
+	common.pos <- dat[[POP_LIST[1]]]$pos
+	for (pop in POP_LIST[-1])
+		common.pos <- intersect(common.pos, dat[[pop]]$pos)
 	common.pos <- common.pos[order(common.pos)]
 	cat("\tPosition Intersect:", length(common.pos), "\n")
-	for (pop in c("CEU", "JPT+CHB", "YRI"))
-		v[[pop]] <- v[[pop]][match(common.pos, v[[pop]]$pos), ]
-
-	common.rs. <- intersect(v[["CEU"]]$rs., v[["JPT+CHB"]]$rs.)
-	common.rs. <- intersect(common.rs., v[["YRI"]]$rs.)
-	cat("\tRS ID Intersect:", length(common.rs.), "\n")
-	for (pop in c("CEU", "JPT+CHB", "YRI"))
-		v[[pop]] <- v[[pop]][match(common.rs., v[[pop]]$rs.), ]
-
-	stopifnot(identical(v[["CEU"]]$SNPalleles, v[["JPT+CHB"]]$SNPalleles))
-	stopifnot(identical(v[["CEU"]]$SNPalleles, v[["YRI"]]$SNPalleles))
-	cat("\tSNP alleles:")
-	print(table(v[["CEU"]]$SNPalleles))
-
-	# detect and remove non-standard alleles
-	allele <- v[["CEU"]]$SNPalleles
-	s <- strsplit(allele, "/")
-	flag <- sapply(s, function(x)
-		(length(x)==2L) & all(x %in% c("A", "G", "C", "T")))
-	if (sum(!flag) > 0)
+	for (pop in POP_LIST)
 	{
-		for (pop in c("CEU", "JPT+CHB", "YRI"))
-			v[[pop]] <- v[[pop]][flag, ]
-		allele <- v[["CEU"]]$SNPalleles
-		cat(sprintf("\tRemove non-standard alleles (%d):", sum(!flag)))
-		print(table(v[["CEU"]]$SNPalleles))
+		if (!identical(common.pos, dat[[pop]]$pos))
+			dat[[pop]] <- dat[[pop]][match(common.pos, dat[[pop]]$pos), ]
 	}
 
+	# check RS ID
+	for (pop in POP_LIST)
+	{
+		flag <- duplicated(dat[[pop]]$rs.)
+		if (any(flag))
+		{
+			dat[[pop]] <- dat[[pop]][!flag, ]
+			cat("\tRS IDs in Population", pop, "are not unique.\n")
+		}
+	}
+	common.rs. <- dat[[POP_LIST[1]]]$rs.
+	for (pop in POP_LIST[-1])
+		common.rs. <- intersect(common.rs., dat[[pop]]$rs.)
+	cat("\tRS ID Intersect:", length(common.rs.), "\n")
+	for (pop in POP_LIST)
+	{
+		if (!identical(common.rs., dat[[pop]]$rs.))
+			dat[[pop]] <- dat[[pop]][match(common.rs., dat[[pop]]$rs.), ]
+	}
+
+	# check alleles
+	allele <- dat[[POP_LIST[1]]]$SNPalleles
+	flag <- rep(TRUE, length(allele))
+	for (pop in POP_LIST[-1])
+	{
+		flag <- flag & (allele == dat[[pop]]$SNPalleles)
+	}
+	cat("\tAllele Intersect:", sum(flag), "\n")
+	for (pop in POP_LIST)
+		dat[[pop]] <- dat[[pop]][flag, ]
+
+
 	# snp.id
-	n <- dim(v$CEU)[1]
+	n <- dim(dat[[1]])[1]
 	append.gdsn(var.snp, seq_len(n) + n.int)
 	n.int <- n.int + n
 
 	# snp.rs.id
-	append.gdsn(var.rsid, v[["CEU"]]$rs.)
+	append.gdsn(var.rsid, dat[[1]]$rs.)
 
 	# snp.chromosome
 	append.gdsn(var.chr, rep(chr.id, n))
 
 	# snp.position
-	append.gdsn(var.pos, v[["CEU"]]$pos)
+	append.gdsn(var.pos, dat[[1]]$pos)
 
 	# snp.allele
+	allele <- dat[[1]]$SNPalleles
 	append.gdsn(var.allele, allele)
 
 	s <- strsplit(allele, "/")
@@ -247,9 +280,9 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 	gNN <- rep("NN", length(allele))
 
 	# genotype
-	m <- cbind(as.matrix(v[["CEU"]][, -c(1:11)]),
-		as.matrix(v[["JPT+CHB"]][, -c(1:11)]),
-		as.matrix(v[["YRI"]][, -c(1:11)]))
+	m <- NULL
+	for (pop in POP_LIST)
+		m <- cbind(m, as.matrix(dat[[pop]][, -c(1:11)]))
 	f0  <- (m == g0)
 	f1a <- (m == g1a)
 	f1b <- (m == g1b)
@@ -274,9 +307,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr1_YRI_r24_nr.b36_fwd.txt.gz, 305929 101 
 ## 	Position Intersect: 293961 
 ## 	RS ID Intersect: 293961 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 25322 98927 19590 25049 99678 25395 
+## 	Allele Intersect: 293961 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 31353638 15375804 31292006  1348022 
@@ -286,9 +317,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr2_YRI_r24_nr.b36_fwd.txt.gz, 318602 101 
 ## 	Position Intersect: 311138 
 ## 	RS ID Intersect: 311138 
-## 	SNP alleles:
-##    A/C    A/G    A/T    C/G    C/T    G/T 
-##  27201 103762  21240  27644 104050  27241 
+## 	Allele Intersect: 311138 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 32613209 17657338 32574767  1161946 
@@ -298,9 +327,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr3_YRI_r24_nr.b36_fwd.txt.gz, 250155 101 
 ## 	Position Intersect: 240048 
 ## 	RS ID Intersect: 240048 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 21686 79798 16510 21496 79053 21505 
+## 	Allele Intersect: 240048 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 25043393 13818481 24903744  1047342 
@@ -310,9 +337,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr4_YRI_r24_nr.b36_fwd.txt.gz, 238922 101 
 ## 	Position Intersect: 229888 
 ## 	RS ID Intersect: 229888 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 20678 75894 17043 18947 76326 21000 
+## 	Allele Intersect: 229888 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 24073953 12824498 24003056  1168253 
@@ -322,9 +347,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr5_YRI_r24_nr.b36_fwd.txt.gz, 242186 101 
 ## 	Position Intersect: 234786 
 ## 	RS ID Intersect: 234786 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 21365 77624 16895 20397 77449 21056 
+## 	Allele Intersect: 234786 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 24562687 13303184 24506196  1020153 
@@ -334,9 +357,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr6_YRI_r24_nr.b36_fwd.txt.gz, 265955 101 
 ## 	Position Intersect: 256301 
 ## 	RS ID Intersect: 256301 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 22002 86446 17841 21318 86260 22434 
+## 	Allele Intersect: 256301 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 27007124 14169112 26961502  1063532 
@@ -346,9 +367,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr7_YRI_r24_nr.b36_fwd.txt.gz, 208708 101 
 ## 	Position Intersect: 200508 
 ## 	RS ID Intersect: 200508 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 17670 65848 14040 18050 67021 17879 
+## 	Allele Intersect: 200508 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 21029169 11198998 20962212   946781 
@@ -358,9 +377,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr8_YRI_r24_nr.b36_fwd.txt.gz, 212014 101 
 ## 	Position Intersect: 202138 
 ## 	RS ID Intersect: 202138 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 18311 65515 14452 19892 66169 17799 
+## 	Allele Intersect: 202138 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 21114323 11756971 20954509   751457 
@@ -370,9 +387,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr9_YRI_r24_nr.b36_fwd.txt.gz, 180147 101 
 ## 	Position Intersect: 171793 
 ## 	RS ID Intersect: 171793 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 14961 56247 11616 17277 56861 14831 
+## 	Allele Intersect: 171793 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 18076595  9589741 18028566   689208 
@@ -382,9 +397,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr10_YRI_r24_nr.b36_fwd.txt.gz, 204146 101 
 ## 	Position Intersect: 196093 
 ## 	RS ID Intersect: 196090 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 16793 65906 12770 17127 66540 16954 
+## 	Allele Intersect: 196090 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 20848586 10424637 20737507   933570 
@@ -394,9 +407,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr11_YRI_r24_nr.b36_fwd.txt.gz, 195110 101 
 ## 	Position Intersect: 189512 
 ## 	RS ID Intersect: 189511 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 17589 62530 12788 16710 62433 17461 
+## 	Allele Intersect: 189511 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 20224947  9898324 20139379   905320 
@@ -406,9 +417,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr12_YRI_r24_nr.b36_fwd.txt.gz, 187294 101 
 ## 	Position Intersect: 175487 
 ## 	RS ID Intersect: 175487 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 15419 59314 11592 15196 58715 15251 
+## 	Allele Intersect: 175487 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 18711609  9171176 18627721   870984 
@@ -418,9 +427,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr13_YRI_r24_nr.b36_fwd.txt.gz, 152674 101 
 ## 	Position Intersect: 146362 
 ## 	RS ID Intersect: 146359 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 12852 49245 10678 11899 48806 12879 
+## 	Allele Intersect: 146359 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 15406596  7939618 15508206   662510 
@@ -430,9 +437,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr14_YRI_r24_nr.b36_fwd.txt.gz, 118518 101 
 ## 	Position Intersect: 114921 
 ## 	RS ID Intersect: 114921 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 10027 38437  7984 10185 38039 10249 
+## 	Allele Intersect: 114921 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 12002642  6454026 12117533   454469 
@@ -442,9 +447,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr15_YRI_r24_nr.b36_fwd.txt.gz, 102431 101 
 ## 	Position Intersect: 99440 
 ## 	RS ID Intersect: 99440 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  8568 33091  6411  9695 33171  8504 
+## 	Allele Intersect: 99440 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 10396930  5650682 10373528   427660 
@@ -454,9 +457,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr16_YRI_r24_nr.b36_fwd.txt.gz, 104530 101 
 ## 	Position Intersect: 101193 
 ## 	RS ID Intersect: 101193 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  8754 32841  6209 12630 31941  8818 
+## 	Allele Intersect: 101193 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 10574295  5484275 10756766   506774 
@@ -466,9 +467,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr17_YRI_r24_nr.b36_fwd.txt.gz, 85541 101 
 ## 	Position Intersect: 82941 
 ## 	RS ID Intersect: 82941 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  6876 28499  4919  7597 28241  6809 
+## 	Allele Intersect: 82941 
 ## 	Genotypes:
 ##       0       1       2       3 
 ## 8792301 4504001 8703914  393854 
@@ -478,9 +477,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr18_YRI_r24_nr.b36_fwd.txt.gz, 115768 101 
 ## 	Position Intersect: 110859 
 ## 	RS ID Intersect: 110859 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 10224 36810  7810  9067 36821 10127 
+## 	Allele Intersect: 110859 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 11728352  5962780 11762914   477884 
@@ -490,9 +487,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr19_YRI_r24_nr.b36_fwd.txt.gz, 53766 101 
 ## 	Position Intersect: 51739 
 ## 	RS ID Intersect: 51739 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  4198 17686  2802  5141 17583  4329 
+## 	Allele Intersect: 51739 
 ## 	Genotypes:
 ##       0       1       2       3 
 ## 5416329 2877886 5435145  240170 
@@ -502,9 +497,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr20_YRI_r24_nr.b36_fwd.txt.gz, 115921 101 
 ## 	Position Intersect: 112857 
 ## 	RS ID Intersect: 112857 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  8392 41376  5302  8266 40601  8920 
+## 	Allele Intersect: 112857 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 12511508  4877837 12678425   403620 
@@ -514,9 +507,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr21_YRI_r24_nr.b36_fwd.txt.gz, 49154 101 
 ## 	Position Intersect: 45882 
 ## 	RS ID Intersect: 45882 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  4004 15312  3161  3866 15635  3904 
+## 	Allele Intersect: 45882 
 ## 	Genotypes:
 ##       0       1       2       3 
 ## 4789336 2653822 4751773  193209 
@@ -526,28 +517,23 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chr22_YRI_r24_nr.b36_fwd.txt.gz, 54840 101 
 ## 	Position Intersect: 51386 
 ## 	RS ID Intersect: 51386 
-## 	SNP alleles:
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-##  4112 17683  2560  5236 17742  4053 
+## 	Allele Intersect: 51386 
 ## 	Genotypes:
 ##       0       1       2       3 
 ## 5606161 2516052 5549585  202422 
 ## 
 ## Read: genotypes_chrX_CEU_r24_nr.b36_fwd.txt.gz, 119769 101 
+## 	CEU: remove non-standard alleles (26)
 ## Read: genotypes_chrX_JPT+CHB_r24_nr.b36_fwd.txt.gz, 120666 101 
+## 	JPT+CHB: remove non-standard alleles (20)
 ## Read: genotypes_chrX_YRI_r24_nr.b36_fwd.txt.gz, 118973 101 
-## 	Position Intersect: 115233 
-## 	RS ID Intersect: 115226 
-## 	SNP alleles:
-##          A/C        A/C/G      A/C/G/T          A/G        A/G/T 
-##        10716            3            2        37324            3 
-##          A/T          C/G        C/G/T          C/T     -/C/T/TT 
-##         8836        10467            4        37088            1 
-##          G/T -/G/T/TATTAT 
-##        10781            1 
-## 	Remove non-standard alleles (14):
-##   A/C   A/G   A/T   C/G   C/T   G/T 
-## 10716 37324  8836 10467 37088 10781 
+## 	YRI: remove non-standard alleles (15)
+## 	Position Intersect: 115219 
+## 	RS IDs in Population CEU are not unique.
+## 	RS IDs in Population JPT+CHB are not unique.
+## 	RS IDs in Population YRI are not unique.
+## 	RS ID Intersect: 115212 
+## 	Allele Intersect: 115212 
 ## 	Genotypes:
 ##        0        1        2        3 
 ## 14021749  2748295 13873765   463431 
@@ -557,9 +543,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chrY_YRI_r24_nr.b36_fwd.txt.gz, 668 101 
 ## 	Position Intersect: 651 
 ## 	RS ID Intersect: 651 
-## 	SNP alleles:
-## A/C A/G A/T C/G C/T G/T 
-##  48 226  45  71 196  65 
+## 	Allele Intersect: 651 
 ## 	Genotypes:
 ##     0     1     2     3 
 ## 51694 31808 54835 37433 
@@ -569,9 +553,7 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 ## Read: genotypes_chrM_YRI_r24_nr.b36_fwd.txt.gz, 211 101 
 ## 	Position Intersect: 203 
 ## 	RS ID Intersect: 203 
-## 	SNP alleles:
-## A/C A/G A/T C/G C/T 
-##   4 103   7   1  88 
+## 	Allele Intersect: 203 
 ## 	Genotypes:
 ##     0     1     2     3 
 ## 30195    23 23990   602
@@ -581,11 +563,11 @@ for (chr.id in c(1:22, "X", "Y", "M"))
 # Add sample.annotation
 
 dat <- read.table(sample.fn, header=TRUE, stringsAsFactors=FALSE)
-names(dat) <- c("FID", "IID", "father", "mother", "sex", "phenotype", "population")
+names(dat) <- c("family", "IID", "father", "mother", "sex", "phenotype", "population")
 dat$sex[dat$sex==1] <- "M"
 dat$sex[dat$sex==2] <- "F"
 dat <- dat[match(sample.id, dat$IID),
-	c("FID", "IID", "father", "mother", "sex", "population")]
+	c("family", "father", "mother", "sex", "population")]
 table(dat$population, exclude=NULL)
 ```
 
@@ -603,7 +585,7 @@ newfile
 ```
 
 ```
-## File: /home/postdoc/zhengx/my/CreateGDS/HapMap2_r24_nr_b36_fwd.gds
+## File: /home/postdoc/zhengx/my/CreateGDS/HapMap2/HapMap2_r24_nr_b36_fwd.gds
 ## +    [  ] *
 ## |--+ sample.id   { VStr8 270 ZIP_RA(26.06%) }
 ## |--+ snp.id   { Int32 3735292 ZIP_RA(34.48%) }
@@ -613,8 +595,7 @@ newfile
 ## |--+ snp.allele   { VStr8 3735292 ZIP_RA(10.36%) }
 ## |--+ genotype   { Bit2 270x3735292 ZIP_RA(39.10%) } *
 ## |--+ sample.annot   [ data.frame ] *
-## |  |--+ FID   { VStr8 270 ZIP_RA(23.46%) }
-## |  |--+ IID   { VStr8 270 ZIP_RA(26.06%) }
+## |  |--+ family   { VStr8 270 ZIP_RA(23.46%) }
 ## |  |--+ father   { VStr8 270 ZIP_RA(23.89%) }
 ## |  |--+ mother   { VStr8 270 ZIP_RA(23.22%) }
 ## |  |--+ sex   { VStr8 270 ZIP_RA(18.89%) }
@@ -630,11 +611,11 @@ cleanup.gds(gds.fn)
 
 ```
 ## Clean up the fragments of GDS file:
-## 	open the file "HapMap2_r24_nr_b36_fwd.gds" (size: 128988269).
-## 	# of fragments in total: 179.
+## 	open the file "HapMap2_r24_nr_b36_fwd.gds" (size: 128987494).
+## 	# of fragments in total: 175.
 ## 	save it to "HapMap2_r24_nr_b36_fwd.gds.tmp".
-## 	rename "HapMap2_r24_nr_b36_fwd.gds.tmp" (size: 128986457).
-## 	# of fragments in total: 28.
+## 	rename "HapMap2_r24_nr_b36_fwd.gds.tmp" (size: 128985706).
+## 	# of fragments in total: 26.
 ```
 
 ```r
@@ -645,7 +626,7 @@ snpgdsSummary(gds.fn)
 ```
 
 ```
-## The file name: /home/postdoc/zhengx/my/CreateGDS/HapMap2_r24_nr_b36_fwd.gds 
+## The file name: /home/postdoc/zhengx/my/CreateGDS/HapMap2/HapMap2_r24_nr_b36_fwd.gds 
 ## The total number of samples: 270 
 ## The total number of SNPs: 3735292 
 ## SNP genotypes are stored in SNP-major mode (Sample X SNP).
