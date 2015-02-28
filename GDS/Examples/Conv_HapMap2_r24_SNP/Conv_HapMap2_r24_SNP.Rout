@@ -1,4 +1,3 @@
-
 R version 3.1.2 (2014-10-31) -- "Pumpkin Helmet"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -19,8 +18,9 @@ Type 'q()' to quit R.
 
 > #########################################################################
 > ##
-> ##  Convert HapMap2_r24 Genotypes to GDS Format
-> ##  File: Conv_HapMap2_r24.R
+> ##  Convert HapMap2_r24 Genotypes to SNP GDS Format
+> ##
+> ##  File: Conv_HapMap2_r24_SNP.R
 > ##  Output: HapMap2_r24_nr_b36_fwd.gds
 > ##
 > 

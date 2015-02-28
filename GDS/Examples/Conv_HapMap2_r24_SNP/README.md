@@ -1,9 +1,9 @@
-
 ```r
 #########################################################################
 ##
-##  Convert HapMap2_r24 Genotypes to GDS Format
-##  File: Conv_HapMap2_r24.R
+##  Convert HapMap2_r24 Genotypes to SNP GDS Format
+##
+##  File: Conv_HapMap2_r24_SNP.R
 ##  Output: HapMap2_r24_nr_b36_fwd.gds
 ##
 
@@ -661,4 +661,3 @@ sessionInfo()
 ## [1] evaluate_0.5.5 formatR_1.0    methods_3.1.2  stringr_0.6.2 
 ## [5] tools_3.1.2
 ```
-

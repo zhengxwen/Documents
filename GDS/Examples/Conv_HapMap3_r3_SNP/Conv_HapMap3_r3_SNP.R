@@ -1,7 +1,8 @@
 #########################################################################
 ##
-##  Convert HapMap3_r3 Genotypes to GDS Format
-##  File: Conv_HapMap3_r3.R
+##  Convert HapMap3_r3 Genotypes to SNP GDS Format
+##
+##  File: Conv_HapMap3_r3_SNP.R
 ##  Output: HapMap3_r3_b36_fwd_consensus_qc_poly.gds
 ##
 

@@ -1,7 +1,8 @@
 #########################################################################
 ##
 ##  Convert HapMap2_r24 Genotypes to GDS Format
-##  File: Conv_HapMap2_r24.R
+##
+##  File: Conv_HapMap2_r24_SNP.R
 ##  Output: HapMap2_r24_nr_b36_fwd.gds
 ##
 
