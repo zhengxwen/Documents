@@ -9,3 +9,8 @@
 * HapMap3_r3 Genotypes to [SNP GDS](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) Format:
     * Data: ftp://ftp.ncbi.nlm.nih.gov/hapmap//genotypes/2010-05_phaseIII/hapmap_format/consensus
     * R code: [Conv_HapMap3_r3_SNP/Conv_HapMap3_r3_SNP.R](./Conv_HapMap3_r3_SNP/Conv_HapMap3_r3_SNP.R)
+
+* HapMap3_r3 Genotypes to [SNP GDS](http://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html) Format:
+    * Data 1: ftp://ftp.ncbi.nlm.nih.gov/hapmap//genotypes/2010-05_phaseIII/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz
+    * Data 2: ftp://ftp.ncbi.nlm.nih.gov/hapmap//genotypes/2010-05_phaseIII/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz
+    * R code: [Conv_HapMap3_r3_SNP_PED/Conv_HapMap3_r3_SNP_PED.R](./Conv_HapMap3_r3_SNP_PED/Conv_HapMap3_r3_SNP_PED.R)
