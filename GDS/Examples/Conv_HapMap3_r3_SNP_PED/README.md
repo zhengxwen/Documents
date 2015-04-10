@@ -13,7 +13,7 @@ library(SNPRelate)
 ```
 
 ```
-## SNPRelate -- supported by Advanced Vector Extensions (AVX)
+## SNPRelate -- supported by Streaming SIMD Extensions 2 (SSE2)
 ```
 
 ```r
