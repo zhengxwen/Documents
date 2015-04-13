@@ -143,7 +143,7 @@ Clean up the fragments of GDS file:
 > 
 > snpgdsSummary(gds.fn)
 Some of 'snp.allele' are not standard (e.g., TC/T).
-The file name: /projects/geneva/gcc-fs2/ZhengX/1KG/Phase1/ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.snp.gds 
+The file name: ZhengX/1KG/Phase1/ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.snp.gds 
 The total number of samples: 1092 
 The total number of SNPs: 39706715 
 SNP genotypes are stored in SNP-major mode (Sample X SNP).
