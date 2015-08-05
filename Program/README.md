@@ -22,3 +22,11 @@ curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/vie
 ## make it executable
 chmod +x viewgds
 ```
+
+You might have to modify the first line of `viewgds` to locate the program `Rscript`:
+```R
+#! /usr/bin/Rscript --vanilla
+suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library("gdsfmt"))
+```
+E.g., change `/usr/bin/Rscript` to `/usr/local/bin/Rscript`.
