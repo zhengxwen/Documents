@@ -10,6 +10,8 @@ option_list <- list(
 		help="Specify a GDS node"),
 	make_option(c("-e", "--export"), type="character",
 		help="Export a GDS node to a text file", metavar="filename"),
+	make_option("--attribute", action="store_true", default=FALSE,
+		help="Show the attribute(s)"),
 	make_option("--quiet", action="store_true", default=FALSE,
 		help="No screen output")
 )
@@ -44,7 +46,10 @@ read <- function(node, start, count)
 # view 1-dim array
 view.dim1 <- function(dm, node)
 {
-	if (dm <= nprev*2L)
+	if (dm <= 0L)
+	{
+		s <- ""
+	} else if (dm <= nprev*2L)
 	{
 		s <- format(read.gdsn(node))
 	} else {
@@ -58,8 +63,13 @@ view.dim1 <- function(dm, node)
 # view 2-dim array
 view.dim2 <- function(dm, node, st=NULL)
 {
-	cn <- rep(1L, length(st))
+	if (any(dm[1L] <= 0L, dm[2L] <= 0L))
+	{
+		cat("\n")
+		return(invisible())
+	}
 
+	cn <- rep(1L, length(st))
 	if (dm[1L] <= nprev*2L)
 	{
 		if (dm[2L] <= nprev*2L)
@@ -104,7 +114,8 @@ view.dim2 <- function(dm, node, st=NULL)
 		s[nprev+1L, 1L] <- BLURRED("......")
 	}
 
-	write.table(s, col.names=FALSE, row.names=FALSE, quote=FALSE)	
+	write.table(s, col.names=FALSE, row.names=FALSE, quote=FALSE)
+	invisible()
 }
 
 # view >2-dim array
@@ -144,7 +155,7 @@ res <- try({
 		if (!opt$quiet)
 		{
 			cat(INVERSE("GDS node:"), "")
-			print(node, all=opt$all)
+			print(node, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
 
 			dp <- objdesp.gdsn(node)
 			if (dp$is.array & !is.null(dp$dim))
@@ -203,7 +214,7 @@ res <- try({
 	{
 		gfile <- openfn.gds(fn)
 		if (!opt$quiet)
-			print(gfile, all=opt$all)
+			print(gfile, all=opt$all, attribute=opt$attribute)
 		closefn.gds(gfile)
 		cat("\n")
 	}
