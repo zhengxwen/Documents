@@ -10,8 +10,10 @@ option_list <- list(
 		help="Specify a GDS node"),
 	make_option(c("-e", "--export"), type="character",
 		help="Export a GDS node to a text file", metavar="filename"),
-	make_option("--attribute", action="store_true", default=FALSE,
+	make_option("--show-attr", action="store_true", default=FALSE,
 		help="Show the attribute(s)"),
+	make_option("--show-attr-notrim", action="store_true", default=FALSE,
+		help="Show the attribute(s) without trim"),
 	make_option("--quiet", action="store_true", default=FALSE,
 		help="No screen output")
 )
@@ -214,7 +216,10 @@ res <- try({
 	{
 		gfile <- openfn.gds(fn)
 		if (!opt$quiet)
-			print(gfile, all=opt$all, attribute=opt$attribute)
+		{
+			print(gfile, all=opt$all, attribute=opt$`show-attr`,
+				attribute.trim=!opt$`show-attr-notrim`)
+		}
 		closefn.gds(gfile)
 		cat("\n")
 	}
