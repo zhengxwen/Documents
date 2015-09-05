@@ -32,3 +32,41 @@ suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
 ```
 E.g., change `/usr/bin/Rscript` to `/usr/local/bin/Rscript`.
+
+```
+Usage: viewgds [options] file1 [file2] [file3]
+
+Options:
+	-a, --all
+		Include hidden GDS node(s)
+
+	-n NODE, --node=NODE
+		Specify a GDS node
+
+	-e FILENAME, --export=FILENAME
+		Export a GDS node to a text file (-e "" for standard output)
+
+	-i FILENAME, --import=FILENAME
+		Import a text file and create a GDS node (-i "" for standard input)
+
+	-c FORMAT, --create=FORMAT
+		Create a GDS node with the format TYPE:DIM:COMPRESSION (e.g., -n NAME -c "int:4,0:ZIP_RA.max")
+
+	--delete
+		Delete the GDS node (e.g., -n NAME --delete)
+
+	--newfile
+		Create a new GDS file
+
+	--show-attr
+		Show the attribute(s)
+
+	--quiet
+		No screen output
+
+	--clean
+		Clean up the fragments of GDS file
+
+	-h, --help
+		Show this help message and exit
+```

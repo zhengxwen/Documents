@@ -3,19 +3,33 @@ suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
 crayon.flag <- requireNamespace("crayon", quietly=TRUE)
 
+
+####  define the options and parse  ####
+
 option_list <- list(
 	make_option(c("-a", "--all"), action="store_true", default=FALSE,
 		help="Include hidden GDS node(s)"),
 	make_option(c("-n", "--node"), action="store", type="character",
 		help="Specify a GDS node"),
 	make_option(c("-e", "--export"), type="character",
-		help="Export a GDS node to a text file", metavar="filename"),
+		help="Export a GDS node to a text file (-e \"\" for standard output)",
+		metavar="filename"),
+	make_option(c("-i", "--import"), type="character",
+		help="Import a text file and create a GDS node (-i \"\" for standard input)",
+		metavar="filename"),
+	make_option(c("-c", "--create"), action="store", type="character",
+		help="Create a GDS node with the format TYPE:DIM:COMPRESSION (e.g., -n NAME -c \"int:4,0:ZIP_RA.max\")",
+		metavar="format"),
+	make_option("--delete", action="store_true", default=FALSE,
+		help="Delete the GDS node (e.g., -n NAME --delete)"),
+	make_option("--newfile", action="store_true", default=FALSE,
+		help="Create a new GDS file"),
 	make_option("--show-attr", action="store_true", default=FALSE,
 		help="Show the attribute(s)"),
-	make_option("--show-attr-notrim", action="store_true", default=FALSE,
-		help="Show the attribute(s) without trim"),
 	make_option("--quiet", action="store_true", default=FALSE,
-		help="No screen output")
+		help="No screen output"),
+	make_option("--clean", action="store_true", default=FALSE,
+		help="Clean up the fragments of GDS file")
 )
 parser <- OptionParser(usage="%prog [options] file1 [file2] [file3]",
 	option_list=option_list)
@@ -24,6 +38,9 @@ arguments <- parse_args(parser, positional_arguments=TRUE)
 opt <- arguments$options
 files <- arguments$args
 
+
+
+####  define the internal functions  ####
 
 # default
 nprev <- 6L
@@ -144,14 +161,90 @@ last.text <- function(s, len)
 
 
 
-# run
-res <- try({
+####  run the main part  ####
+
+main <- function()
+{
 	if (!is.null(opt$node))
 	{
 		if (length(files) != 1L)
 			stop("Please specify only one GDS file.")
 
-		gfile <- openfn.gds(files)
+		# open the existing GDS file
+		readonly <- is.null(opt$create) & !opt$delete
+		gfile <- openfn.gds(files, readonly=readonly)
+		on.exit({ closefn.gds(gfile) })
+
+		if (!is.null(opt$create))
+		{
+			if (opt$delete)
+				stop("\"-c FORMAT --delete\" should not be specified simultaneously.")
+
+			nm <- unlist(strsplit(opt$node, "/", fixed=TRUE))
+			if (length(nm) > 1L)
+				folder <- index.gdsn(gfile, index=nm[-length(nm)])
+			else
+				folder <- gfile$root
+
+			fmt <- unlist(strsplit(opt$create, ":", fixed=TRUE))
+			if (length(fmt) <= 0L)
+				stop("Please specify the format (e.g., -n NAME -c \"int:4,0:ZIP_RA.max\").")
+
+			if (length(fmt) < 2L) fmt[2L] <- "0"
+			if (trimws(fmt[2L]) == "") fmt[2L] <- "0"
+			dm <- scan(text=fmt[2L], what=integer(), quiet=TRUE, sep=",")
+
+			if (length(fmt) < 3L) fmt[3L] <- ""
+			if (length(fmt) > 4L)
+				stop("Maximum number of cells in -c FORMAT is 4.")
+			if (length(fmt) < 4L) fmt[4L] <- ""
+
+			args <- eval(parse(text=paste("list(", fmt[4L], ")")))
+			args$node <- folder
+			args$name <- nm[length(nm)]
+			args$storage <- fmt[1L]
+			args$valdim <- dm
+			args$compress <- fmt[3L]
+
+			n <- do.call(add.gdsn, args)
+			if (!opt$quiet & is.null(opt$import))
+				print(n, attribute=TRUE, attribute.trim=FALSE)
+
+			# import
+			if (!is.null(opt$import))
+			{
+				if (opt$import == "") opt$import <- "stdin"
+				f <- file(opt$import)
+				open(f)
+				while(length(s <- readLines(f, n=1)) > 0)
+				{
+					ss <- scan(text=s, what="", quiet=TRUE, strip.white=TRUE)
+					append.gdsn(n, ss)
+				}
+				close(f)
+				readmode.gdsn(n)
+
+				if (!opt$quiet)
+				{
+					cat(INVERSE("New GDS node:"), "")
+					print(n, attribute=TRUE, attribute.trim=FALSE)
+				}
+			}
+
+			q(status=0L)
+
+		} else if (opt$delete)
+		{
+			n <- index.gdsn(gfile, opt$node)
+			if (!opt$quiet)
+			{
+				cat(INVERSE("Delete GDS node:"), "")
+				print(n, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
+			}
+			delete.gdsn(n)
+			
+			q(status=0L)
+		}
 
 		node <- index.gdsn(gfile, opt$node)
 		if (!opt$quiet)
@@ -207,23 +300,42 @@ res <- try({
 			}
 		}
 
-		closefn.gds(gfile)
 		q(status=0L)
 	}
 
 
 	for (fn in files)
 	{
-		gfile <- openfn.gds(fn)
-		if (!opt$quiet)
+		if (opt$newfile)
 		{
-			print(gfile, all=opt$all, attribute=opt$`show-attr`,
-				attribute.trim=!opt$`show-attr-notrim`)
+			f <- createfn.gds(fn)
+			if (!opt$quiet)
+			{
+				cat(INVERSE("New file:"), "")
+				cat(f$filename)
+			}
+			closefn.gds(f)
+		} else {
+			# open the GDS file
+			f <- openfn.gds(fn)
+			if (!opt$quiet)
+			{
+				print(f, all=opt$all, attribute=opt$`show-attr`,
+					attribute.trim=FALSE)
+			}
+			closefn.gds(f)
+
+			# clean up the GDS file
+			if (opt$clean)
+				cleanup.gds(fn, verbose=!opt$quiet)
 		}
-		closefn.gds(gfile)
-		cat("\n")
+
+		if (!opt$quiet) cat("\n")
 	}
-})
+}
+
+
+res <- try(main())
 
 # quit
-q(status = if (inherits(res, "try-error")) 1L else 0L)
+q(status = ifelse(inherits(res, "try-error"), 1L, 0L))
