@@ -38,35 +38,31 @@ Usage: viewgds [options] file1 [file2] [file3]
 
 Options:
 	-a, --all
-		Include hidden GDS node(s)
-
+		Include hidden GDS node(s)=
 	-n NODE, --node=NODE
-		Specify a GDS node
-
+		Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]
 	-e FILENAME, --export=FILENAME
 		Export a GDS node to a text file (-e "" for standard output)
-
 	-i FILENAME, --import=FILENAME
-		Import a text file and create a GDS node (-i "" for standard input)
-
+		Import a text file and create a GDS node "-c" (-i "" for standard input)
+	--icol=COLUMN
+		Specify the columns for importing data, allowing multiple variables splited by semicolon
+		E.g., --icol "-(1:4)" for excluding the first four columns
 	-c FORMAT, --create=FORMAT
-		Create a GDS node with the format TYPE:DIM:COMPRESSION (e.g., -n NAME -c "int:4,0:ZIP_RA.max")
-
+		Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]
+		E.g., -n NAME -c "int:4,0:ZIP_RA.max"
 	--delete
 		Delete the GDS node (e.g., -n NAME --delete)
-
 	--newfile
 		Create a new GDS file
-
 	--show-attr
 		Show the attribute(s)
-
+	--system
+		Show the system configuration
 	--quiet
 		No screen output
-
 	--clean
 		Clean up the fragments of GDS file
-
 	-h, --help
 		Show this help message and exit
 ```

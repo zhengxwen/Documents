@@ -1,6 +1,7 @@
 #! /usr/bin/Rscript --vanilla
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
+suppressPackageStartupMessages(library("compiler"))
 crayon.flag <- requireNamespace("crayon", quietly=TRUE)
 
 
@@ -10,15 +11,18 @@ option_list <- list(
 	make_option(c("-a", "--all"), action="store_true", default=FALSE,
 		help="Include hidden GDS node(s)"),
 	make_option(c("-n", "--node"), action="store", type="character",
-		help="Specify a GDS node"),
+		help="Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]"),
 	make_option(c("-e", "--export"), type="character",
 		help="Export a GDS node to a text file (-e \"\" for standard output)",
 		metavar="filename"),
 	make_option(c("-i", "--import"), type="character",
-		help="Import a text file and create a GDS node (-i \"\" for standard input)",
+		help="Import a text file and create a GDS node \"-c\" (-i \"\" for standard input)",
 		metavar="filename"),
+	make_option(c("--icol"), type="character",
+		help="Specify the columns for importing data, allowing multiple variables splited by semicolon\n\t\tE.g., --icol \"-(1:4)\" for excluding the first four columns",
+		metavar="column"),
 	make_option(c("-c", "--create"), action="store", type="character",
-		help="Create a GDS node with the format TYPE:DIM:COMPRESSION (e.g., -n NAME -c \"int:4,0:ZIP_RA.max\")",
+		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
 	make_option("--delete", action="store_true", default=FALSE,
 		help="Delete the GDS node (e.g., -n NAME --delete)"),
@@ -26,6 +30,8 @@ option_list <- list(
 		help="Create a new GDS file"),
 	make_option("--show-attr", action="store_true", default=FALSE,
 		help="Show the attribute(s)"),
+	make_option("--system", action="store_true", default=FALSE,
+		help="Show the system configuration"),
 	make_option("--quiet", action="store_true", default=FALSE,
 		help="No screen output"),
 	make_option("--clean", action="store_true", default=FALSE,
@@ -103,7 +109,7 @@ view.dim2 <- function(dm, node, st=NULL)
 	} else {
 		if (dm[2L] <= nprev*2L)
 		{
-			v <- cbind(
+			v <- rbind(
 				read(node, c(1L,1L,st), c(nprev,-1L,cn)),
 				read(node, c(dm[1L]-nprev+1L,1L,st), c(nprev,-1L,cn))
 			)
@@ -165,69 +171,116 @@ last.text <- function(s, len)
 
 main <- function()
 {
+	if (opt$system)
+	{
+		v <- c(package.version = as.character(packageVersion("gdsfmt")),
+			system.gds())
+		print(v)
+	}
+
 	if (!is.null(opt$node))
 	{
 		if (length(files) != 1L)
+		{
+			if (length(files) == 0L)
+				stop("No input GDS file.")
+			cat(files, sep="\n")
 			stop("Please specify only one GDS file.")
+		}
 
 		# open the existing GDS file
 		readonly <- is.null(opt$create) & !opt$delete
 		gfile <- openfn.gds(files, readonly=readonly)
 		on.exit({ closefn.gds(gfile) })
 
+		# get GDS variable(s)
+		nodenames <- unlist(strsplit(opt$node, ",", fixed=TRUE))
+		if (length(nodenames) <= 0L) nodenames <- ""
+
 		if (!is.null(opt$create))
 		{
 			if (opt$delete)
 				stop("\"-c FORMAT --delete\" should not be specified simultaneously.")
 
-			nm <- unlist(strsplit(opt$node, "/", fixed=TRUE))
-			if (length(nm) > 1L)
-				folder <- index.gdsn(gfile, index=nm[-length(nm)])
-			else
-				folder <- gfile$root
+			createfmt <- trimws(unlist(strsplit(opt$create, ";", fixed=TRUE)))
+			if (length(createfmt) != length(nodenames))
+				stop("'-c' should have the same number of elements as '-n'.")
 
-			fmt <- unlist(strsplit(opt$create, ":", fixed=TRUE))
-			if (length(fmt) <= 0L)
-				stop("Please specify the format (e.g., -n NAME -c \"int:4,0:ZIP_RA.max\").")
+			nodelist <- list()
+			for (i in seq_len(length(nodenames)))
+			{
+				nm <- unlist(strsplit(nodenames[i], "/", fixed=TRUE))
+				if (length(nm) > 1L)
+					folder <- index.gdsn(gfile, index=nm[-length(nm)])
+				else
+					folder <- gfile$root
 
-			if (length(fmt) < 2L) fmt[2L] <- "0"
-			if (trimws(fmt[2L]) == "") fmt[2L] <- "0"
-			dm <- scan(text=fmt[2L], what=integer(), quiet=TRUE, sep=",")
+				fmt <- trimws(unlist(strsplit(createfmt[i], ":", fixed=TRUE)))
+				if (length(fmt) <= 0L)
+					stop("Please specify the format (e.g., -n NAME -c \"int:4,0:ZIP_RA.max\").")
 
-			if (length(fmt) < 3L) fmt[3L] <- ""
-			if (length(fmt) > 4L)
-				stop("Maximum number of cells in -c FORMAT is 4.")
-			if (length(fmt) < 4L) fmt[4L] <- ""
+				if (length(fmt) < 2L) fmt[2L] <- "0"
+				if (trimws(fmt[2L]) == "") fmt[2L] <- "0"
+				dm <- scan(text=fmt[2L], what=integer(), quiet=TRUE, sep=",")
 
-			args <- eval(parse(text=paste("list(", fmt[4L], ")")))
-			args$node <- folder
-			args$name <- nm[length(nm)]
-			args$storage <- fmt[1L]
-			args$valdim <- dm
-			args$compress <- fmt[3L]
+				if (length(fmt) < 3L) fmt[3L] <- ""
+				if (length(fmt) > 4L)
+					stop("Maximum number of cells in -c FORMAT is 4.")
+				if (length(fmt) < 4L) fmt[4L] <- ""
 
-			n <- do.call(add.gdsn, args)
-			if (!opt$quiet & is.null(opt$import))
-				print(n, attribute=TRUE, attribute.trim=FALSE)
+				args <- list(node=folder, name=nm[length(nm)], storage=fmt[1L],
+					valdim=dm, compress=fmt[3L])
+				args <- c(args, eval(parse(text=paste("list(", fmt[4L], ")"))))
+
+				n <- do.call(add.gdsn, args)
+				if (!opt$quiet & is.null(opt$import))
+					print(n, attribute=TRUE, attribute.trim=FALSE)
+				nodelist[[i]] <- n
+			}
 
 			# import
 			if (!is.null(opt$import))
 			{
+				ic <- vector("list", length(nodenames))
+				if (!is.null(opt$icol))
+				{
+					s <- trimws(unlist(strsplit(opt$icol, ";", fixed=TRUE)))
+					if (length(s) != length(nodenames))
+						stop("'--icol' should have the same number of elements as '-n'.")
+					for (i in seq_len((length(s))))
+					{
+						if (s[i] != "")
+							ic[[i]] <- eval(parse(text=paste("c(", s[i], ")")))
+					}
+				}
+
 				if (opt$import == "") opt$import <- "stdin"
 				f <- file(opt$import)
 				open(f)
-				while(length(s <- readLines(f, n=1)) > 0)
+				while(length(s <- readLines(f, n=1L)) > 0L)
 				{
 					ss <- scan(text=s, what="", quiet=TRUE, strip.white=TRUE)
-					append.gdsn(n, ss)
+					for (i in seq_len(length(nodelist)))
+					{
+						v <- ic[[i]]
+						if (is.null(v))
+							append.gdsn(nodelist[[i]], ss)
+						else
+							append.gdsn(nodelist[[i]], ss[v])
+					}
 				}
 				close(f)
-				readmode.gdsn(n)
+
+				for (i in seq_len(length(nodelist)))
+					readmode.gdsn(nodelist[[i]])
 
 				if (!opt$quiet)
 				{
-					cat(INVERSE("New GDS node:"), "")
-					print(n, attribute=TRUE, attribute.trim=FALSE)
+					for (i in seq_len(length(nodelist)))
+					{
+						cat(INVERSE("New GDS node:"), "")
+						print(nodelist[[i]], attribute=TRUE, attribute.trim=FALSE)
+					}
 				}
 			}
 
@@ -235,41 +288,50 @@ main <- function()
 
 		} else if (opt$delete)
 		{
-			n <- index.gdsn(gfile, opt$node)
-			if (!opt$quiet)
+			for (nm in nodenames)
 			{
-				cat(INVERSE("Delete GDS node:"), "")
-				print(n, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
+				n <- index.gdsn(gfile, nm)
+				if (!opt$quiet)
+				{
+					cat(INVERSE("Delete GDS node:"), "")
+					print(n, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
+				}
+				delete.gdsn(n)
 			}
-			delete.gdsn(n)
 			
 			q(status=0L)
 		}
 
-		node <- index.gdsn(gfile, opt$node)
-		if (!opt$quiet)
+		for (nm in nodenames)
 		{
-			cat(INVERSE("GDS node:"), "")
-			print(node, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
-
-			dp <- objdesp.gdsn(node)
-			if (dp$is.array & !is.null(dp$dim))
+			node <- index.gdsn(gfile, nm)
+			if (!opt$quiet)
 			{
-				cat(INVERSE("Preview:\n"))
-				if (length(dp$dim) == 1L)
+				cat(INVERSE("GDS node:"), "")
+				print(node, all=opt$all, attribute=TRUE, attribute.trim=FALSE)
+
+				dp <- objdesp.gdsn(node)
+				if (dp$is.array & !is.null(dp$dim))
 				{
-					view.dim1(dp$dim, node)
-				} else if (length(dp$dim) == 2L)
-				{
-					view.dim2(dp$dim, node)
-				} else {
-					view.dim(3L, NULL, dp$dim, node)
+					cat(INVERSE("Preview:\n"))
+					if (length(dp$dim) == 1L)
+					{
+						view.dim1(dp$dim, node)
+					} else if (length(dp$dim) == 2L)
+					{
+						view.dim2(dp$dim, node)
+					} else {
+						view.dim(3L, NULL, dp$dim, node)
+					}
 				}
 			}
 		}
 
 		if (!is.null(opt$export))
 		{
+			if (length(nodenames) > 1L)
+				stop("Only a GDS node is allowed for the export.")
+
 			dp <- objdesp.gdsn(node)
 			if (dp$is.array & !is.null(dp$dim))
 			{
@@ -304,6 +366,11 @@ main <- function()
 	}
 
 
+	if (length(files) <= 0L)
+	{
+		stop("No input file, see \"viewgds -h\".")	
+	}
+
 	for (fn in files)
 	{
 		if (opt$newfile)
@@ -335,7 +402,10 @@ main <- function()
 }
 
 
+main <- cmpfun(main)
 res <- try(main())
+v <- warnings()
+if (!is.null(v)) cat(v, sep="\n")
 
 # quit
 q(status = ifelse(inherits(res, "try-error"), 1L, 0L))
