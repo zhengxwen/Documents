@@ -19,8 +19,17 @@ option_list <- list(
 		help="Import a text file and create a GDS node \"-c\" (-i \"\" for standard input)",
 		metavar="filename"),
 	make_option(c("--icol"), type="character",
-		help="Specify the columns for importing data, allowing multiple variables splited by semicolon\n\t\tE.g., --icol \"-(1:4)\" for excluding the first four columns",
+		help="Specify the columns for importing data (multiple variables splited by semicolon)\n\t\tE.g., --icol \"-(1:4)\" for excluding the first four columns",
 		metavar="column"),
+	make_option(c("--ifunction"), type="character",
+		help="Specify the functions for importing data (multiple functions splited by semicolon)\n\t\tE.g., --ifunction \"function(x) x+1; function(x) 4-x\" for data preparation",
+		metavar="function"),
+	make_option(c("--iskip"), type="integer",
+		help="Specify the number of line skipped when importing data",
+		metavar="number"),
+	make_option(c("--inmax"), type="integer",
+		help="Specify the maximun number of line when importing data",
+		metavar="number"),
 	make_option(c("-c", "--create"), action="store", type="character",
 		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
@@ -30,9 +39,15 @@ option_list <- list(
 		help="Create a new GDS file"),
 	make_option("--show-attr", action="store_true", default=FALSE,
 		help="Show the attribute(s)"),
+	make_option(c("--attr-set"), type="character",
+		help="Set the attribute(s) (e.g., --attr-set \"x=1,y=1:4\")",
+		metavar="value"),
+	make_option(c("--attr-del"), type="character",
+		help="Delete the attribute(s) (e.g., --attr-del \"x,y\")",
+		metavar="value"),
 	make_option("--system", action="store_true", default=FALSE,
 		help="Show the system configuration"),
-	make_option("--quiet", action="store_true", default=FALSE,
+	make_option(c("-q", "--quiet"), action="store_true", default=FALSE,
 		help="No screen output"),
 	make_option("--clean", action="store_true", default=FALSE,
 		help="Clean up the fragments of GDS file")
@@ -166,6 +181,41 @@ last.text <- function(s, len)
 }
 
 
+## set/delete the attributes
+do_attribute <- function(gdsfile, namelist)
+{
+	if (!is.null(opt$`attr-set`))
+	{
+		if (length(namelist) != 1L)
+			stop("Please specify only one GDS node for the attribute assignment.")
+		n <- index.gdsn(gdsfile, namelist[1L])
+		args <- eval(parse(text=paste("list(", opt$`attr-set`, ")")))
+		nm <- names(args)
+		for (i in seq_len(length(nm)))
+			put.attr.gdsn(n, nm[i], args[[i]])
+	}
+
+	if (!is.null(opt$`attr-del`))
+	{
+		if (length(namelist) != 1L)
+			stop("Please specify only one GDS node for the attribute assignment.")
+		n <- index.gdsn(gdsfile, namelist[1L])
+		nm <- unlist(strsplit(opt$`attr-del`, ",", fixed=TRUE))
+		delete.attr.gdsn(n, nm)
+	}
+}
+
+## clean up the GDS file(s)
+do_clean <- function()
+{
+	if (opt$clean)
+	{
+		for (fn in files)
+			cleanup.gds(fn, verbose=!opt$quiet)
+	}
+}
+
+
 
 ####  run the main part  ####
 
@@ -178,6 +228,22 @@ main <- function()
 		print(v)
 	}
 
+	if (opt$newfile)
+	{
+		for (fn in files)
+		{
+			f <- createfn.gds(fn)
+			if (!opt$quiet)
+			{
+				cat(INVERSE("New file:"), "")
+				cat(f$filename)
+			}
+			closefn.gds(f)
+		}
+		if (!opt$quiet) cat("\n")
+	}
+
+
 	if (!is.null(opt$node))
 	{
 		if (length(files) != 1L)
@@ -189,7 +255,8 @@ main <- function()
 		}
 
 		# open the existing GDS file
-		readonly <- is.null(opt$create) & !opt$delete
+		readonly <- is.null(opt$create) & !opt$delete &
+			is.null(opt$`attr-set`) & is.null(opt$`attr-del`)
 		gfile <- openfn.gds(files, readonly=readonly)
 		on.exit({ closefn.gds(gfile) })
 
@@ -229,7 +296,7 @@ main <- function()
 				if (length(fmt) < 4L) fmt[4L] <- ""
 
 				args <- list(node=folder, name=nm[length(nm)], storage=fmt[1L],
-					valdim=dm, compress=fmt[3L])
+					valdim=dm, compress=fmt[3L], replace=TRUE)
 				args <- c(args, eval(parse(text=paste("list(", fmt[4L], ")"))))
 
 				n <- do.call(add.gdsn, args)
@@ -238,15 +305,30 @@ main <- function()
 				nodelist[[i]] <- n
 			}
 
+			do_attribute(gfile, nodenames)
+
 			# import
 			if (!is.null(opt$import))
 			{
+				if (!opt$quiet)
+				{
+					for (i in seq_len(length(nodelist)))
+					{
+						cat(INVERSE("GDS node:"), "")
+						print(nodelist[[i]], attribute=TRUE, attribute.trim=FALSE)
+					}
+					cat(INVERSE("Import:"), " ", opt$import, "\n", sep="")
+				}
+
 				ic <- vector("list", length(nodenames))
 				if (!is.null(opt$icol))
 				{
 					s <- trimws(unlist(strsplit(opt$icol, ";", fixed=TRUE)))
 					if (length(s) != length(nodenames))
-						stop("'--icol' should have the same number of elements as '-n'.")
+					{
+						stop("'--icol' should have the same number of elements as ",
+							"'-n' (", length(nodenames), ").")
+					}
 					for (i in seq_len((length(s))))
 					{
 						if (s[i] != "")
@@ -254,35 +336,108 @@ main <- function()
 					}
 				}
 
-				if (opt$import == "") opt$import <- "stdin"
-				f <- file(opt$import)
-				open(f)
-				while(length(s <- readLines(f, n=1L)) > 0L)
+				ifun <- vector("list", length(nodenames))
+				for (i in seq_len(length(ifun)))
+					ifun[[i]] <- `c`
+				if (!is.null(opt$ifunction))
 				{
-					ss <- scan(text=s, what="", quiet=TRUE, strip.white=TRUE)
-					for (i in seq_len(length(nodelist)))
+					s <- trimws(unlist(strsplit(opt$ifunction, ";", fixed=TRUE)))
+					if (length(s) > length(nodenames))
 					{
-						v <- ic[[i]]
-						if (is.null(v))
-							append.gdsn(nodelist[[i]], ss)
-						else
-							append.gdsn(nodelist[[i]], ss[v])
+						stop("'--ifunction' should have the same number of elements as ",
+							"'-n' (", length(nodenames), ").")
+					}
+					if (length(s) < length(nodenames))
+					{
+						s <- c(s, rep("", length(nodenames)-length(s)))
+					}
+					for (i in seq_len((length(s))))
+					{
+						if (s[i] != "")
+						{
+							ifun[[i]] <- eval(parse(text=s[i]))
+							if (!is.function(ifun[[i]]))
+								stop("--ifunction \"", s[i], "\" should be a function.")
+						}
 					}
 				}
-				close(f)
+
+				if (opt$import == "") opt$import <- "stdin"
+				infile <- file(opt$import)
+				open(infile)
+				on.exit({ close(infile) }, add=TRUE)
+				nc <- NA_integer_
+				k <- 1L
+
+				if (!is.null(opt$iskip))
+				{
+					i <- opt$iskip
+					if (i > 0L)
+					{
+						while(length(readLines(f, n=1L)) > 0L)
+						{
+							k <- k + 1L
+							i <- i - 1L
+							if (i <= 0L) break
+						}
+					}
+				}
+
+				if (!is.null(opt$inmax))
+				{
+					if (opt$inmax <= 0L)
+						stop("--inmax should be > 0.")
+					kmax <- k + opt$inmax
+				} else
+					kmax <- 2147483647L  # 2^31 - 1
+
+				while(length(s <- readLines(infile, n=1L)) > 0L)
+				{
+					ss <- scan(text=s, what="", quiet=TRUE, strip.white=TRUE)
+					if (is.na(nc))
+					{
+						nc <- length(ss)
+					} else {
+						if (nc != length(ss))
+						{
+							stop(sprintf("Line %d should have %d columns.",
+								k, length(ss)))
+						}
+					}
+
+					for (i in seq_len(length(nodelist)))
+					{
+						f <- ifun[[i]]
+						v <- ic[[i]]
+						if (is.null(v))
+							append.gdsn(nodelist[[i]], f(ss))
+						else
+							append.gdsn(nodelist[[i]], f(ss[v]))
+					}
+
+					k <- k + 1L
+					if (k >= kmax) break
+				}
 
 				for (i in seq_len(length(nodelist)))
 					readmode.gdsn(nodelist[[i]])
 
-				if (!opt$quiet)
+				on.exit({ closefn.gds(gfile) })
+				close(infile)
+			}
+
+			if (!opt$quiet)
+			{
+				for (i in seq_len(length(nodelist)))
 				{
-					for (i in seq_len(length(nodelist)))
-					{
-						cat(INVERSE("New GDS node:"), "")
-						print(nodelist[[i]], attribute=TRUE, attribute.trim=FALSE)
-					}
+					cat(INVERSE("New GDS node:"), "")
+					print(nodelist[[i]], attribute=TRUE, attribute.trim=FALSE)
 				}
 			}
+
+			on.exit()
+			closefn.gds(gfile)
+			do_clean()
 
 			q(status=0L)
 
@@ -298,9 +453,15 @@ main <- function()
 				}
 				delete.gdsn(n)
 			}
-			
+
+			on.exit()
+			closefn.gds(gfile)
+			do_clean()
+
 			q(status=0L)
 		}
+
+		do_attribute(gfile, nodenames)
 
 		for (nm in nodenames)
 		{
@@ -352,15 +513,21 @@ main <- function()
 
 				if (length(dp$dim) == 1L)
 				{
-					apply.gdsn(node, 1L, FUN=cat, as.is="none", file=fout, fill=TRUE)
-				} else if (length(dp$dim) == 2L)
+					apply.gdsn(node, 1L, FUN=cat, as.is="none", file=fout,
+						fill=TRUE)
+				} else if (length(dp$dim) >= 2L)
 				{
-					apply.gdsn(node, 1L, FUN=cat, as.is="none", file=fout, fill=65536L)
+					apply.gdsn(node, length(dp$dim), FUN=cat, as.is="none",
+						file=fout, fill=4194304L)
 				}
 
 				if (fn != "") close(fout)
 			}
 		}
+
+		on.exit()
+		closefn.gds(gfile)
+		do_clean()
 
 		q(status=0L)
 	}
@@ -371,18 +538,10 @@ main <- function()
 		stop("No input file, see \"viewgds -h\".")	
 	}
 
-	for (fn in files)
+	if (!opt$newfile)
 	{
-		if (opt$newfile)
+		for (fn in files)
 		{
-			f <- createfn.gds(fn)
-			if (!opt$quiet)
-			{
-				cat(INVERSE("New file:"), "")
-				cat(f$filename)
-			}
-			closefn.gds(f)
-		} else {
 			# open the GDS file
 			f <- openfn.gds(fn)
 			if (!opt$quiet)
@@ -391,14 +550,12 @@ main <- function()
 					attribute.trim=FALSE)
 			}
 			closefn.gds(f)
-
-			# clean up the GDS file
-			if (opt$clean)
-				cleanup.gds(fn, verbose=!opt$quiet)
 		}
-
 		if (!opt$quiet) cat("\n")
 	}
+
+	# clean up the GDS file(s)
+	do_clean()
 }
 
 

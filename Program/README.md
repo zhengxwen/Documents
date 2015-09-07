@@ -38,7 +38,7 @@ Usage: viewgds [options] file1 [file2] [file3]
 
 Options:
 	-a, --all
-		Include hidden GDS node(s)=
+		Include hidden GDS node(s)
 	-n NODE, --node=NODE
 		Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]
 	-e FILENAME, --export=FILENAME
@@ -46,8 +46,15 @@ Options:
 	-i FILENAME, --import=FILENAME
 		Import a text file and create a GDS node "-c" (-i "" for standard input)
 	--icol=COLUMN
-		Specify the columns for importing data, allowing multiple variables splited by semicolon
+		Specify the columns for importing data (multiple variables splited by semicolon)
 		E.g., --icol "-(1:4)" for excluding the first four columns
+	--ifunction=FUNCTION
+		Specify the functions for importing data (multiple functions splited by semicolon)
+		E.g., --ifunction "function(x) x+1; function(x) 4-x" for data preparation
+	--iskip=NUMBER
+		Specify the number of line skipped when importing data
+	--inmax=NUMBER
+		Specify the maximun number of line when importing data
 	-c FORMAT, --create=FORMAT
 		Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]
 		E.g., -n NAME -c "int:4,0:ZIP_RA.max"
@@ -57,6 +64,10 @@ Options:
 		Create a new GDS file
 	--show-attr
 		Show the attribute(s)
+	--attr-set=VALUE
+		Set the attribute(s) (e.g., --attr-set "x=1,y=1:4")
+	--attr-del=VALUE
+		Delete the attribute(s) (e.g., --attr-del "x,y")
 	--system
 		Show the system configuration
 	--quiet
