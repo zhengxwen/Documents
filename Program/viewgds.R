@@ -15,14 +15,17 @@ option_list <- list(
 	make_option(c("-e", "--export"), type="character",
 		help="Export a GDS node to a text file (-e \"\" for standard output)",
 		metavar="filename"),
+	make_option(c("--efun"), type="character",
+		help="Specify a function for exporting data\n\t\tE.g., --efun \"function(s) paste('prefix', s)\" for data preparation",
+		metavar="function"),
 	make_option(c("-i", "--import"), type="character",
 		help="Import a text file and create a GDS node \"-c\" (-i \"\" for standard input)",
 		metavar="filename"),
 	make_option(c("--icol"), type="character",
 		help="Specify the columns for importing data (multiple variables splited by semicolon)\n\t\tE.g., --icol \"-(1:4)\" for excluding the first four columns",
 		metavar="column"),
-	make_option(c("--ifunction"), type="character",
-		help="Specify the functions for importing data (multiple functions splited by semicolon)\n\t\tE.g., --ifunction \"function(x) x+1; function(x) 4-x\" for data preparation",
+	make_option(c("--ifun"), type="character",
+		help="Specify the functions for importing data (multiple functions splited by pound)\n\t\tE.g., --ifun \"function(x) x+1 # function(x) 4-x\" for data preparation",
 		metavar="function"),
 	make_option(c("--iskip"), type="integer",
 		help="Specify the number of line skipped when importing data",
@@ -30,6 +33,8 @@ option_list <- list(
 	make_option(c("--inmax"), type="integer",
 		help="Specify the maximun number of line when importing data",
 		metavar="number"),
+	make_option(c("-s", "--separator"), type="character",
+		help="Set the field separator character", metavar="character"),
 	make_option(c("-c", "--create"), action="store", type="character",
 		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
@@ -339,12 +344,12 @@ main <- function()
 				ifun <- vector("list", length(nodenames))
 				for (i in seq_len(length(ifun)))
 					ifun[[i]] <- `c`
-				if (!is.null(opt$ifunction))
+				if (!is.null(opt$ifun))
 				{
-					s <- trimws(unlist(strsplit(opt$ifunction, ";", fixed=TRUE)))
+					s <- trimws(unlist(strsplit(opt$ifun, "#", fixed=TRUE)))
 					if (length(s) > length(nodenames))
 					{
-						stop("'--ifunction' should have the same number of elements as ",
+						stop("'--ifun' should have the same number of elements as ",
 							"'-n' (", length(nodenames), ").")
 					}
 					if (length(s) < length(nodenames))
@@ -357,7 +362,7 @@ main <- function()
 						{
 							ifun[[i]] <- eval(parse(text=s[i]))
 							if (!is.function(ifun[[i]]))
-								stop("--ifunction \"", s[i], "\" should be a function.")
+								stop("--ifun \"", s[i], "\" should be a function.")
 						}
 					}
 				}
@@ -391,9 +396,17 @@ main <- function()
 				} else
 					kmax <- 2147483647L  # 2^31 - 1
 
+				sep <- ""
+				if (!is.null(opt$separator))
+				{
+					sep <- eval(parse(text=paste('"', opt$separator, '"',
+						sep="")))
+				}
+
 				while(length(s <- readLines(infile, n=1L)) > 0L)
 				{
-					ss <- scan(text=s, what="", quiet=TRUE, strip.white=TRUE)
+					ss <- scan(text=s, what="", quiet=TRUE, sep=sep,
+						strip.white=TRUE)
 					if (is.na(nc))
 					{
 						nc <- length(ss)
@@ -493,6 +506,24 @@ main <- function()
 			if (length(nodenames) > 1L)
 				stop("Only a GDS node is allowed for the export.")
 
+			efun <- NULL
+			if (!is.null(opt$efun))
+			{
+				s <- trimws(opt$efun)
+				if (s != "")
+				{
+					efun <- eval(parse(text=s))
+					if (!is.function(efun))
+						stop("--efun should be a function.")
+				}
+			}
+
+			sep <- " "
+			if (!is.null(opt$separator))
+			{
+				sep <- eval(parse(text=paste('"', opt$separator, '"', sep="")))
+			}
+
 			dp <- objdesp.gdsn(node)
 			if (dp$is.array & !is.null(dp$dim))
 			{
@@ -513,12 +544,26 @@ main <- function()
 
 				if (length(dp$dim) == 1L)
 				{
-					apply.gdsn(node, 1L, FUN=cat, as.is="none", file=fout,
-						fill=TRUE)
+					if (is.null(efun))
+					{
+						apply.gdsn(node, 1L, FUN=cat, as.is="none", file=fout,
+							fill=4194304L)
+					} else {
+						apply.gdsn(node, 1L, FUN=function(x) {
+							cat(efun(x), file=fout, fill=4194304L) },
+							as.is="none")
+					}
 				} else if (length(dp$dim) >= 2L)
 				{
-					apply.gdsn(node, length(dp$dim), FUN=cat, as.is="none",
-						file=fout, fill=4194304L)
+					if (is.null(efun))
+					{
+						apply.gdsn(node, length(dp$dim), FUN=cat, as.is="none",
+							file=fout, fill=4194304L, sep=sep)
+					} else {
+						apply.gdsn(node, length(dp$dim), FUN=function(x) {
+							cat(efun(x), file=fout, fill=4194304L, sep=sep)
+						}, as.is="none")
+					}
 				}
 
 				if (fn != "") close(fout)
@@ -562,7 +607,7 @@ main <- function()
 main <- cmpfun(main)
 res <- try(main())
 v <- warnings()
-if (!is.null(v)) cat(v, sep="\n")
+if (!is.null(v)) cat(v, file=stderr(), sep="\n")
 
 # quit
 q(status = ifelse(inherits(res, "try-error"), 1L, 0L))

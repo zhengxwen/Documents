@@ -43,18 +43,23 @@ Options:
 		Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]
 	-e FILENAME, --export=FILENAME
 		Export a GDS node to a text file (-e "" for standard output)
+	--efun=FUNCTION
+		Specify a function for exporting data
+		E.g., --efun "function(s) paste('prefix', s)" for data preparation
 	-i FILENAME, --import=FILENAME
 		Import a text file and create a GDS node "-c" (-i "" for standard input)
 	--icol=COLUMN
 		Specify the columns for importing data (multiple variables splited by semicolon)
 		E.g., --icol "-(1:4)" for excluding the first four columns
-	--ifunction=FUNCTION
-		Specify the functions for importing data (multiple functions splited by semicolon)
-		E.g., --ifunction "function(x) x+1; function(x) 4-x" for data preparation
+	--ifun=FUNCTION
+		Specify the functions for importing data (multiple functions splited by pound)
+		E.g., --ifun "function(x) x+1 # function(x) 4-x" for data preparation
 	--iskip=NUMBER
 		Specify the number of line skipped when importing data
 	--inmax=NUMBER
 		Specify the maximun number of line when importing data
+	-s CHARACTER, --separator=CHARACTER
+		Set the field separator character
 	-c FORMAT, --create=FORMAT
 		Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]
 		E.g., -n NAME -c "int:4,0:ZIP_RA.max"
@@ -70,7 +75,7 @@ Options:
 		Delete the attribute(s) (e.g., --attr-del "x,y")
 	--system
 		Show the system configuration
-	--quiet
+	-q, --quiet
 		No screen output
 	--clean
 		Clean up the fragments of GDS file
