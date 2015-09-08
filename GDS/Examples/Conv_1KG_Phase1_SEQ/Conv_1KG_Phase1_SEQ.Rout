@@ -1,0 +1,202 @@
+R version 3.2.0 (2015-04-16) -- "Full of Ingredients"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #########################################################################
+> ##
+> ##  Convert 1KG Phase 1 Genotypes to Sequencing GDS Format
+> ##
+> ##  File: Conv_1KG_Phase1_SEQ.R
+> ##  Output: ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds
+> ##
+> 
+> library(SeqArray)
+Loading required package: gdsfmt
+> 
+> 
+> # file name
+> FTP_BASE <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp"
+> FTP_GENO_PATH <- "release/20110521"
+> FTP_FILE_TEMPLATE <- "ALL.chr%s.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
+> 
+> 
+> #########################################################################
+> ##  Create GDS file
+> 
+> vcf.fn <- sprintf(FTP_FILE_TEMPLATE, c(1:22, "X"))
+> gds.fn <- "ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds"
+> 
+> seqVCF2GDS(vcf.fn, gds.fn, compress.option=seqCompress.Option("ZIP_RA.max"))
+The Variant Call Format (VCF) header:
+	file format: VCFv4.1
+	the number of sets of chromosomes (ploidy): 2
+	the number of samples: 1092
+	GDS genotype storage: bit2
+Parsing "ALL.chr1.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x3007196 ZIP_RA(5.51%), 90.4 MB }
+Parsing "ALL.chr2.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x6314788 ZIP_RA(5.48%), 188.9 MB }
+Parsing "ALL.chr3.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x9078242 ZIP_RA(5.48%), 271.5 MB }
+Parsing "ALL.chr4.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x11815007 ZIP_RA(5.48%), 353.5 MB }
+Parsing "ALL.chr5.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x14345224 ZIP_RA(5.47%), 428.5 MB }
+Parsing "ALL.chr6.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x16769649 ZIP_RA(5.50%), 503.7 MB }
+Parsing "ALL.chr7.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x18984880 ZIP_RA(5.53%), 573.1 MB }
+Parsing "ALL.chr8.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x21168719 ZIP_RA(5.52%), 637.8 MB }
+Parsing "ALL.chr9.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x22821107 ZIP_RA(5.54%), 690.3 MB }
+Parsing "ALL.chr10.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x24703770 ZIP_RA(5.55%), 748.8 MB }
+Parsing "ALL.chr11.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x26598678 ZIP_RA(5.56%), 806.8 MB }
+Parsing "ALL.chr12.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x28426684 ZIP_RA(5.56%), 863.5 MB }
+Parsing "ALL.chr13.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x29799684 ZIP_RA(5.57%), 905.9 MB }
+Parsing "ALL.chr14.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x31057938 ZIP_RA(5.57%), 945.0 MB }
+Parsing "ALL.chr15.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x32188492 ZIP_RA(5.58%), 981.3 MB }
+Parsing "ALL.chr16.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x33399111 ZIP_RA(5.59%), 1.0 GB }
+Parsing "ALL.chr17.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x34445844 ZIP_RA(5.60%), 1.1 GB }
+Parsing "ALL.chr18.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x35534664 ZIP_RA(5.61%), 1.1 GB }
+Parsing "ALL.chr19.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x36350779 ZIP_RA(5.62%), 1.1 GB }
+Parsing "ALL.chr20.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x37205945 ZIP_RA(5.63%), 1.1 GB }
+Parsing "ALL.chr21.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x37724910 ZIP_RA(5.63%), 1.2 GB }
+Parsing "ALL.chr22.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x38219238 ZIP_RA(5.64%), 1.2 GB }
+Parsing "ALL.chrX.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x39706715 ZIP_RA(5.64%), 1.2 GB }
+Done.
+Optimize the access efficiency ...
+Clean up the fragments of GDS file:
+	open the file "ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds" (size: 151137070866).
+	# of fragments in total: 515151.
+	save it to "ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds.tmp".
+	rename "ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds.tmp" (size: 151130890374).
+	# of fragments in total: 110.
+> 
+> 
+> 
+> #########################################################################
+> ##  Show the dataset
+> 
+> (f <- openfn.gds(gds.fn))
+File: /projects/geneva/gcc-fs2/ZhengX/1KG/Phase1/ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds (151.1 GB)
++    [  ] *
+|--+ description   [  ] *
+|--+ sample.id   { VStr8 1092 ZIP_RA(26.22%), 2.3 KB }
+|--+ variant.id   { Int32 39706715 ZIP_RA(34.58%), 54.9 MB }
+|--+ position   { Int32 39706715 ZIP_RA(45.98%), 73.0 MB }
+|--+ chromosome   { VStr8 39706715 ZIP_RA(0.10%), 92.3 KB }
+|--+ allele   { VStr8 39706715 ZIP_RA(20.64%), 47.1 MB }
+|--+ genotype   [  ] *
+|  |--+ data   { Bit2 2x1092x39706715 ZIP_RA(5.64%), 1.2 GB }
+|  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+|  |--+ extra   { Int16 0 ZIP_RA, 17 bytes }
+|--+ phase   [  ]
+|  |--+ data   { Bit1 1092x39706715 ZIP_RA(0.11%), 5.9 MB }
+|  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+|  |--+ extra   { Bit1 0 ZIP_RA, 17 bytes }
+|--+ annotation   [  ]
+|  |--+ id   { VStr8 39706715 ZIP_RA(38.38%), 169.7 MB }
+|  |--+ qual   { Float32 39706715 ZIP_RA(3.44%), 5.5 MB }
+|  |--+ filter   { Int32,factor 39706715 ZIP_RA(0.10%), 154.4 KB } *
+|  |--+ info   [  ]
+|  |  |--+ LDAF   { Float32 39706715 ZIP_RA(47.56%), 75.5 MB } *
+|  |  |--+ AVGPOST   { Float32 39706715 ZIP_RA(28.49%), 45.3 MB } *
+|  |  |--+ RSQ   { Float32 39706715 ZIP_RA(58.76%), 93.3 MB } *
+|  |  |--+ ERATE   { Float32 39706715 ZIP_RA(13.41%), 21.3 MB } *
+|  |  |--+ THETA   { Float32 39706715 ZIP_RA(20.88%), 33.2 MB } *
+|  |  |--+ CIEND   { Int32 2x39706715 ZIP_RA(0.13%), 410.9 KB } *
+|  |  |--+ CIPOS   { Int32 2x39706715 ZIP_RA(0.13%), 411.2 KB } *
+|  |  |--+ END   { Int32 39706715 ZIP_RA(0.16%), 252.0 KB } *
+|  |  |--+ HOMLEN   { Int32 8856 ZIP_RA(20.16%), 7.1 KB } *
+|  |  |--+ HOMSEQ   { VStr8 7050 ZIP_RA(27.41%), 22.9 KB } *
+|  |  |--+ SVLEN   { Int32 39706715 ZIP_RA(0.13%), 206.2 KB } *
+|  |  |--+ SVTYPE   { VStr8 39706715 ZIP_RA(0.17%), 67.8 KB } *
+|  |  |--+ AC   { Int32 39706715 ZIP_RA(29.33%), 46.6 MB } *
+|  |  |--+ AN   { Int32 39706715 ZIP_RA(0.10%), 154.4 KB } *
+|  |  |--+ AA   { VStr8 39706715 ZIP_RA(20.53%), 16.6 MB } *
+|  |  |--+ AF   { Float32 39706715 ZIP_RA(22.83%), 36.3 MB } *
+|  |  |--+ AMR_AF   { Float32 39706715 ZIP_RA(16.51%), 26.2 MB } *
+|  |  |--+ ASN_AF   { Float32 39706715 ZIP_RA(14.63%), 23.2 MB } *
+|  |  |--+ AFR_AF   { Float32 39706715 ZIP_RA(20.51%), 32.6 MB } *
+|  |  |--+ EUR_AF   { Float32 39706715 ZIP_RA(16.40%), 26.0 MB } *
+|  |  |--+ VT   { VStr8 39706715 ZIP_RA(1.31%), 2.1 MB } *
+|  |  |--+ SNPSOURCE   { VStr8 38671749 ZIP_RA(0.35%), 943.4 KB } *
+|  |--+ format   [  ]
+|  |  |--+ DS   [  ] *
+|  |  |  |--+ data   { Float32 1092x39706715 ZIP_RA(2.88%), 5.0 GB }
+|  |  |--+ GL   [  ] *
+|  |  |  |--+ data   { Float32 1092x119120145 ZIP_RA(27.69%), 144.1 GB }
+|--+ sample.annotation   [  ]
+> closefn.gds(f)
+> 
+> 
+> 
+> #########################################################################
+> ##  Session Info
+> 
+> sessionInfo()
+R version 3.2.0 (2015-04-16)
+Platform: x86_64-unknown-linux-gnu (64-bit)
+Running under: Red Hat Enterprise Linux Server release 6.6 (Santiago)
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] SeqArray_1.9.15 gdsfmt_1.5.13  
+
+loaded via a namespace (and not attached):
+ [1] AnnotationDbi_1.30.1     XVector_0.8.0            GenomicRanges_1.20.3    
+ [4] BiocGenerics_0.14.0      zlibbioc_1.14.0          GenomicAlignments_1.4.1 
+ [7] IRanges_2.2.1            BiocParallel_1.2.1       BSgenome_1.36.0         
+[10] GenomeInfoDb_1.4.0       tools_3.2.0              parallel_3.2.0          
+[13] Biobase_2.28.0           DBI_0.3.1                lambda.r_1.1.7          
+[16] futile.logger_1.4.1      digest_0.6.8             crayon_1.3.0            
+[19] rtracklayer_1.28.2       S4Vectors_0.6.0          futile.options_1.0.0    
+[22] bitops_1.0-6             RCurl_1.95-4.6           biomaRt_2.24.0          
+[25] memoise_0.2.1            RSQLite_1.0.0            GenomicFeatures_1.20.1  
+[28] Biostrings_2.36.0        Rsamtools_1.20.1         stats4_3.2.0            
+[31] XML_3.98-1.1             VariantAnnotation_1.14.1
+> 
+> q("no")
+> proc.time()
+      user     system    elapsed 
+674709.516   4364.237 986563.685 
+
