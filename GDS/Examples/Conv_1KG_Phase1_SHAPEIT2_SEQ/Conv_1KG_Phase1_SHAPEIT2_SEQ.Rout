@@ -1,0 +1,303 @@
+
+R version 3.2.0 (2015-04-16) -- "Full of Ingredients"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #########################################################################
+> ##
+> ##  Convert 1KG Phase 1 Genotypes to Sequence GDS Format
+> ##
+> ##  File: Conv_1KG_Phase1_SHAPEIT2_SEQ.R
+> ##  Output: 1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds
+> ##
+> 
+> library(SeqArray)
+Loading required package: gdsfmt
+> 
+> 
+> # File name
+> FTP_BASE <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp"
+> FTP_GENO_PATH <- "phase1/analysis_results/shapeit2_phased_haplotypes"
+> FTP_FILE_TEMPLATE <- "ALL.chr%d.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz"
+> 
+> 
+> 
+> #########################################################################
+> ##  Download the gz files from 1KG Website
+> 
+> for (chr in 1:22)
++ {
++ 	fn <- sprintf(FTP_FILE_TEMPLATE, chr)
++ 	vcf.fn <- paste(FTP_BASE, FTP_GENO_PATH, fn, sep="/")
++ 	download.file(vcf.fn, fn)
++ }
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr1.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 394496744 bytes
+==================================================
+downloaded 376.2 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr2.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 427458227 bytes
+==================================================
+downloaded 407.7 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr3.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 363537433 bytes
+==================================================
+downloaded 346.7 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr4.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 367098834 bytes
+==================================================
+downloaded 350.1 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr5.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 330483142 bytes
+==================================================
+downloaded 315.2 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr6.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 331570641 bytes
+==================================================
+downloaded 316.2 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr7.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 297489283 bytes
+==================================================
+downloaded 283.7 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr8.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 283569616 bytes
+==================================================
+downloaded 270.4 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr9.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 218782226 bytes
+==================================================
+downloaded 208.6 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr10.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 253066318 bytes
+==================================================
+downloaded 241.3 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr11.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 251951288 bytes
+==================================================
+downloaded 240.3 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr12.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 242660730 bytes
+==================================================
+downloaded 231.4 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr13.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 185205476 bytes
+==================================================
+downloaded 176.6 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr14.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 167021992 bytes
+==================================================
+downloaded 159.3 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr15.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 149431873 bytes
+==================================================
+downloaded 142.5 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr16.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 158078237 bytes
+==================================================
+downloaded 150.8 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr17.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 138398725 bytes
+==================================================
+downloaded 132.0 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr18.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 145458987 bytes
+==================================================
+downloaded 138.7 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr19.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 114688995 bytes
+==================================================
+downloaded 109.4 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr20.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 112960580 bytes
+==================================================
+downloaded 107.7 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr21.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 71314849 bytes
+==================================================
+downloaded 68.0 MB
+
+trying URL 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/shapeit2_phased_haplotypes/ALL.chr22.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz'
+ftp data connection made, file length 68172963 bytes
+==================================================
+downloaded 65.0 MB
+
+> 
+> 
+> #########################################################################
+> ##  Create GDS file
+> 
+> vcf.fn <- sprintf(FTP_FILE_TEMPLATE, 1:22)
+> gds.fn <- "1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds"
+> 
+> seqVCF2GDS(vcf.fn, gds.fn, compress.option=seqCompress.Option("ZIP_RA.max"))
+The Variant Call Format (VCF) header:
+	file format: VCFv4.1
+	the number of sets of chromosomes (ploidy): 2
+	the number of samples: 1092
+	GDS genotype storage: bit2
+Parsing "ALL.chr1.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x3007196 ZIP_RA(5.00%), 82.0 MB }
+Parsing "ALL.chr2.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x6314788 ZIP_RA(4.98%), 171.6 MB }
+Parsing "ALL.chr3.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x9078242 ZIP_RA(4.98%), 246.9 MB }
+Parsing "ALL.chr4.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x11815007 ZIP_RA(4.97%), 320.6 MB }
+Parsing "ALL.chr5.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x14345224 ZIP_RA(4.96%), 388.8 MB }
+Parsing "ALL.chr6.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x16769649 ZIP_RA(4.98%), 456.4 MB }
+Parsing "ALL.chr7.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x18984880 ZIP_RA(5.01%), 519.0 MB }
+Parsing "ALL.chr8.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x21168719 ZIP_RA(5.00%), 578.0 MB }
+Parsing "ALL.chr9.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x22821107 ZIP_RA(5.02%), 625.9 MB }
+Parsing "ALL.chr10.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x24703770 ZIP_RA(5.03%), 679.1 MB }
+Parsing "ALL.chr11.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x26598678 ZIP_RA(5.04%), 731.6 MB }
+Parsing "ALL.chr12.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x28426684 ZIP_RA(5.04%), 782.8 MB }
+Parsing "ALL.chr13.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x29799684 ZIP_RA(5.05%), 821.4 MB }
+Parsing "ALL.chr14.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x31057938 ZIP_RA(5.05%), 856.8 MB }
+Parsing "ALL.chr15.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x32188492 ZIP_RA(5.06%), 890.1 MB }
+Parsing "ALL.chr16.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x33399111 ZIP_RA(5.08%), 925.8 MB }
+Parsing "ALL.chr17.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x34445844 ZIP_RA(5.08%), 956.1 MB }
+Parsing "ALL.chr18.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x35534664 ZIP_RA(5.09%), 987.4 MB }
+Parsing "ALL.chr19.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x36350779 ZIP_RA(5.10%), 1.0 GB }
+Parsing "ALL.chr20.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x37205945 ZIP_RA(5.10%), 1.0 GB }
+Parsing "ALL.chr21.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x37724910 ZIP_RA(5.11%), 1.1 GB }
+Parsing "ALL.chr22.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.genotypes.all.vcf.gz" ...
++ genotype/data   { Bit2 2x1092x38219238 ZIP_RA(5.12%), 1.1 GB }
+Done.
+Optimize the access efficiency ...
+Clean up the fragments of GDS file:
+	open the file "1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds" (size: 1594668499).
+	# of fragments in total: 20439.
+	save it to "1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds.tmp".
+	rename "1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds.tmp" (size: 1594423939).
+	# of fragments in total: 59.
+> 
+> 
+> 
+> #########################################################################
+> ##  Show the dataset
+> 
+> (f <- openfn.gds(gds.fn))
+File: /home/postdoc/zhengx/tmp/G1000/1KG_autosomes_SHAPEIT2_integrated_phase1_v3_20101123_snps_indels_svs_genotypes.seq.gds (1.6 GB)
++    [  ] *
+|--+ description   [  ] *
+|--+ sample.id   { VStr8 1092 ZIP_RA(26.22%), 2.3 KB }
+|--+ variant.id   { Int32 38219238 ZIP_RA(34.58%), 52.9 MB }
+|--+ position   { Int32 38219238 ZIP_RA(45.81%), 70.0 MB }
+|--+ chromosome   { VStr8 38219238 ZIP_RA(0.10%), 89.4 KB }
+|--+ allele   { VStr8 38219238 ZIP_RA(20.57%), 44.8 MB }
+|--+ genotype   [  ] *
+|  |--+ data   { Bit2 2x1092x38219238 ZIP_RA(5.12%), 1.1 GB }
+|  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+|  |--+ extra   { Int16 0 ZIP_RA, 17 bytes }
+|--+ phase   [  ]
+|  |--+ data   { Bit1 1092x38219238 ZIP_RA(0.10%), 5.1 MB }
+|  |--+ extra.index   { Int32 3x0 ZIP_RA, 17 bytes } *
+|  |--+ extra   { Bit1 0 ZIP_RA, 17 bytes }
+|--+ annotation   [  ]
+|  |--+ id   { VStr8 38219238 ZIP_RA(38.36%), 169.2 MB }
+|  |--+ qual   { Float32 38219238 ZIP_RA(0.10%), 148.7 KB }
+|  |--+ filter   { Int32,factor 38219238 ZIP_RA(0.10%), 148.7 KB } *
+|  |--+ info   [  ]
+|  |  |--+ ALL_AF   { Float32 38219238 ZIP_RA(33.66%), 51.5 MB } *
+|  |  |--+ AMR_AF   { Float32 38219238 ZIP_RA(20.24%), 30.9 MB } *
+|  |  |--+ ASN_AF   { Float32 38219238 ZIP_RA(17.58%), 26.9 MB } *
+|  |  |--+ AFR_AF   { Float32 38219238 ZIP_RA(25.97%), 39.7 MB } *
+|  |  |--+ EUR_AF   { Float32 38219238 ZIP_RA(20.58%), 31.5 MB } *
+|  |  |--+ VT   { VStr8 38219238 ZIP_RA(1.30%), 2.0 MB } *
+|  |  |--+ SNPSOURCE   { VStr8 38632943 ZIP_RA(0.35%), 933.1 KB } *
+|  |--+ format   [  ]
+|--+ sample.annotation   [  ]
+> closefn.gds(f)
+> 
+> 
+> 
+> #########################################################################
+> ##  Session Info
+> 
+> sessionInfo()
+R version 3.2.0 (2015-04-16)
+Platform: x86_64-unknown-linux-gnu (64-bit)
+Running under: Red Hat Enterprise Linux Server release 6.6 (Santiago)
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] SeqArray_1.9.15 gdsfmt_1.5.13  
+
+loaded via a namespace (and not attached):
+ [1] AnnotationDbi_1.30.1     XVector_0.8.0            GenomicRanges_1.20.3    
+ [4] BiocGenerics_0.14.0      zlibbioc_1.14.0          GenomicAlignments_1.4.1 
+ [7] IRanges_2.2.1            BiocParallel_1.2.1       BSgenome_1.36.0         
+[10] GenomeInfoDb_1.4.0       tools_3.2.0              parallel_3.2.0          
+[13] Biobase_2.28.0           DBI_0.3.1                lambda.r_1.1.7          
+[16] futile.logger_1.4.1      digest_0.6.8             crayon_1.3.0            
+[19] rtracklayer_1.28.2       S4Vectors_0.6.0          futile.options_1.0.0    
+[22] bitops_1.0-6             RCurl_1.95-4.6           biomaRt_2.24.0          
+[25] memoise_0.2.1            RSQLite_1.0.0            GenomicFeatures_1.20.1  
+[28] Biostrings_2.36.0        Rsamtools_1.20.1         stats4_3.2.0            
+[31] XML_3.98-1.1             VariantAnnotation_1.14.1
+> 
+> q("no")
+> proc.time()
+     user    system   elapsed 
+29516.566   128.776 31205.002 
