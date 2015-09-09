@@ -9,7 +9,7 @@
 library(SeqArray)
 
 
-# file name
+# File name
 FTP_BASE <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp"
 FTP_GENO_PATH <- "release/20110521"
 FTP_FILE_TEMPLATE <- "ALL.chr%s.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz"

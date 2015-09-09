@@ -18,7 +18,7 @@ Type 'q()' to quit R.
 
 > #########################################################################
 > ##
-> ##  Convert 1KG Phase 1 Genotypes to Sequencing GDS Format
+> ##  Convert 1KG Phase 1 Genotypes to Sequence GDS Format
 > ##
 > ##  File: Conv_1KG_Phase1_SEQ.R
 > ##  Output: ALL_chr_phase1_release_v3_20101123_snps_indels_svs_genotypes.seq.gds
@@ -28,7 +28,7 @@ Type 'q()' to quit R.
 Loading required package: gdsfmt
 > 
 > 
-> # file name
+> # File name
 > FTP_BASE <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp"
 > FTP_GENO_PATH <- "release/20110521"
 > FTP_FILE_TEMPLATE <- "ALL.chr%s.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
@@ -199,4 +199,3 @@ loaded via a namespace (and not attached):
 > proc.time()
       user     system    elapsed 
 674709.516   4364.237 986563.685 
-
