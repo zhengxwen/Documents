@@ -16,22 +16,17 @@ biocLite("gdsfmt")
 
 Command line,
 ```sh
+## locate the Rscript program
+echo '#!' `which Rscript` '--vanilla' > viewgds
+
 ## download
-wget --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R -O viewgds
+wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
 ## or (on mac)
-curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R -o viewgds
+curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
 
 ## make it executable
 chmod +x viewgds
 ```
-
-You might have to modify the first line of `viewgds` to locate the program `Rscript`:
-```R
-#! /usr/bin/Rscript --vanilla
-suppressPackageStartupMessages(library("optparse"))
-suppressPackageStartupMessages(library("gdsfmt"))
-```
-E.g., change `/usr/bin/Rscript` to `/usr/local/bin/Rscript`.
 
 ```
 Usage: viewgds [options] file1 [file2] [file3]
