@@ -19,9 +19,8 @@ Installation with command line,
 echo '#!' `which Rscript` '--vanilla' > viewgds
 curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
 chmod +x viewgds
-```
-Or
-```sh
+
+## Or
 echo '#!' `which Rscript` '--vanilla' > viewgds
 wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
 chmod +x viewgds
@@ -35,6 +34,8 @@ Options:
 		Include hidden GDS node(s)
 	-n NODE, --node=NODE
 		Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]
+	-f FUNCTION, --fun=FUNCTION
+		Specify a function for data processing, e.g., --fun "table(x)" for tabulation
 	-e FILENAME, --export=FILENAME
 		Export a GDS node to a text file (-e "" for standard output)
 	--efun=FUNCTION

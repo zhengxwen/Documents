@@ -12,6 +12,9 @@ option_list <- list(
 		help="Include hidden GDS node(s)"),
 	make_option(c("-n", "--node"), action="store", type="character",
 		help="Specify a GDS node (e.g., -n VAR1[,VAR2,VAR3...]"),
+	make_option(c("-f", "--fun"), type="character",
+		help="Specify a function for data processing, e.g., --fun \"table(x)\" for tabulation",
+		metavar="function"),
 	make_option(c("-e", "--export"), type="character",
 		help="Export a GDS node to a text file (-e \"\" for standard output)",
 		metavar="filename"),
@@ -99,7 +102,7 @@ view.dim1 <- function(dm, node)
 		s <- format(read.gdsn(node))
 	} else {
 		s <- format(c(read(node, 1L, nprev), read(node, dm-nprev+1L, nprev)))
-		s <- s[c(1:nprev, NA, seq(nprev+1L, length(s)))]
+		s <- s[c(1L:nprev, NA, seq(nprev+1L, length(s)))]
 		s[nprev+1L] <- BLURRED("...")
 	}
 	cat(s, sep="\n")
@@ -149,12 +152,12 @@ view.dim2 <- function(dm, node, st=NULL)
 	s <- format(v)
 	if (dm[2L] > nprev*2L)
 	{
-		s <- s[, c(1:nprev, NA, seq(nprev+1L,ncol(s))), drop=FALSE]
+		s <- s[, c(1L:nprev, NA, seq(nprev+1L,ncol(s))), drop=FALSE]
 		s[, nprev+1L] <- BLURRED("..")
 	}
 	if (dm[1L] > nprev*2L)
 	{
-		s <- s[c(1:nprev, NA, seq(nprev+1L,nrow(s))), , drop=FALSE]
+		s <- s[c(1L:nprev, NA, seq(nprev+1L,nrow(s))), , drop=FALSE]
 		s[nprev+1L, ] <- ""
 		s[nprev+1L, 1L] <- BLURRED("......")
 	}
@@ -498,6 +501,12 @@ main <- function()
 						view.dim(3L, NULL, dp$dim, node)
 					}
 				}
+			}
+			if (!is.null(opt$fun))
+			{
+				x <- read.gdsn(node)
+				fun <- eval(parse(text=opt$fun))
+				if (is.function(fun)) fun(x)
 			}
 		}
 
