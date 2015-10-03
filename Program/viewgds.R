@@ -506,7 +506,10 @@ main <- function()
 			{
 				x <- read.gdsn(node)
 				fun <- eval(parse(text=opt$fun))
-				if (is.function(fun)) fun(x)
+				if (is.function(fun))
+					fun(x)
+				else
+					print(fun)
 			}
 		}
 
