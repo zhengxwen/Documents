@@ -1,4 +1,4 @@
-#! /usr/bin/Rscript --vanilla
+#! /usr/local/bin/Rscript --vanilla
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
 suppressPackageStartupMessages(library("compiler"))
