@@ -41,16 +41,18 @@ option_list <- list(
 	make_option(c("-c", "--create"), action="store", type="character",
 		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
+	make_option("--summary", action="store_true", default=FALSE,
+		help="Summarize a GDS node"),
 	make_option("--delete", action="store_true", default=FALSE,
 		help="Delete the GDS node (e.g., -n NAME --delete)"),
 	make_option("--newfile", action="store_true", default=FALSE,
 		help="Create a new GDS file"),
 	make_option(c("-s", "--show-attr"), action="store_true", default=FALSE,
 		help="Show the attribute(s)"),
-	make_option(c("--attr-set"), type="character",
+	make_option("--attr-set", type="character",
 		help="Set the attribute(s) (e.g., --attr-set \"x=1,y=1:4\")",
 		metavar="value"),
-	make_option(c("--attr-del"), type="character",
+	make_option("--attr-del", type="character",
 		help="Delete the attribute(s) (e.g., --attr-del \"x,y\")",
 		metavar="value"),
 	make_option("--system", action="store_true", default=FALSE,
@@ -500,6 +502,21 @@ main <- function()
 					} else {
 						view.dim(3L, NULL, dp$dim, node)
 					}
+				}
+
+				if (opt$summary)
+				{
+					cat(INVERSE("Summary:\n"))
+					v <- gdsfmt:::.summary.gdsn(node)
+					if (!is.null(v$decimal))
+					{
+						d <- v$decimal
+						v$decimal <- NULL
+						cat(paste(names(v), format(v, justify="none"), sep=": "), sep="\n")
+						cat("decimal:", paste(paste(sQuote(names(d)), d), collapse="; "))
+						cat("\n")
+					} else
+						cat(paste(names(v), format(v, justify="none"), sep=": "), sep="\n")
 				}
 			}
 			if (!is.null(opt$fun))
