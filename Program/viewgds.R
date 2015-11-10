@@ -41,6 +41,12 @@ option_list <- list(
 	make_option(c("-c", "--create"), action="store", type="character",
 		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
+	make_option("--digest", type="character",
+		help="Create hash function digest for raw data field (ALGO can be md5, sha1, sha256, sha384 or sha512)",
+		metavar="algo"),
+	make_option("--hash", type="character",
+		help="Create hash function digest for R object ignoring compression (ALGO can be md5, sha1, sha256, sha384 or sha512)",
+		metavar="algo"),
 	make_option("--summary", action="store_true", default=FALSE,
 		help="Summarize a GDS node"),
 	make_option("--delete", action="store_true", default=FALSE,
@@ -513,7 +519,9 @@ main <- function()
 						d <- v$decimal
 						v$decimal <- NULL
 						cat(paste(names(v), format(v, justify="none"), sep=": "), sep="\n")
-						cat("decimal:", paste(paste(sQuote(names(d)), d), collapse="; "))
+						cat("decimal:", paste(paste(
+							sQuote(names(d)), d, sprintf("(%.1f%%)", d/sum(d)*100)),
+							collapse="; "))
 						cat("\n")
 					} else
 						cat(paste(names(v), format(v, justify="none"), sep=": "), sep="\n")
@@ -527,6 +535,14 @@ main <- function()
 					fun(x)
 				else
 					print(fun)
+			}
+			if (!is.null(opt$digest))
+			{
+				cat(digest.gdsn(node, opt$digest), "\n", sep="")
+			}
+			if (!is.null(opt$hash))
+			{
+				cat(digest.gdsn(node, opt$hash, action="Robject"), "\n", sep="")
 			}
 		}
 
