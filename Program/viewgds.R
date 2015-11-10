@@ -538,10 +538,14 @@ main <- function()
 			}
 			if (!is.null(opt$digest))
 			{
+				if (!opt$quiet)
+					cat(INVERSE(paste(opt$digest, "digest:")), "\n", sep="")
 				cat(digest.gdsn(node, opt$digest), "\n", sep="")
 			}
 			if (!is.null(opt$hash))
 			{
+				if (!opt$quiet)
+					cat(INVERSE(paste(opt$hash, "digest:")), "\n", sep="")
 				cat(digest.gdsn(node, opt$hash, action="Robject"), "\n", sep="")
 			}
 		}
