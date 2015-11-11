@@ -513,7 +513,7 @@ main <- function()
 				if (opt$summary)
 				{
 					cat(INVERSE("Summary:\n"))
-					v <- gdsfmt:::.summary.gdsn(node)
+					v <- summarize.gdsn(node)
 					if (!is.null(v$decimal))
 					{
 						d <- v$decimal
