@@ -95,6 +95,7 @@ read <- function(node, start, count)
 		if (length(dm) > 2L)
 			dim(v) <- dm[c(1L,2L)]
 	}
+	if (is.factor(v)) v <- as.character(v)
 	v
 }
 
