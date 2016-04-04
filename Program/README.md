@@ -77,3 +77,33 @@ Options:
 	-h, --help
 		Show this help message and exit
 ```
+
+
+## diffgds.R
+
+`diffgds` is a shell script written in R, to compare two files GDS files. The R packages `gdsfmt`, `getopt` and `optparse` should be installed before running `diffgds`.
+
+In the R environment,
+```R
+install.packages("getopt", repos="http://cran.r-project.org")
+install.packages("optparse", repos="http://cran.r-project.org")
+
+source("http://bioconductor.org/biocLite.R")
+biocLite("gdsfmt")
+```
+
+Installation with command line,
+```sh
+echo '#!' `which Rscript` '--vanilla' > diffgds
+curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R >> diffgds
+chmod +x diffgds
+
+## Or
+echo '#!' `which Rscript` '--vanilla' > diffgds
+wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R >> diffgds
+chmod +x diffgds
+```
+
+```
+Usage: diffgds [options] file1 file2
+```
