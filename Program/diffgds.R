@@ -46,10 +46,11 @@ scan_gdsn <- function(node1, node2)
 		i2 <- index.gdsn(node2, n)
 		d1 <- objdesp.gdsn(i1)$dim
 		d2 <- objdesp.gdsn(i1)$dim
+		fullname <- name.gdsn(i1, TRUE)
 
 		if (!is.null(d1) & !is.null(d2))
 		{
-			cat("checking ", name.gdsn(i1, FALSE), " ...", sep="")
+			cat("checking ", fullname, " ...", sep="")
 
 			flag <- identical(d1, d2)
 			if (flag)
@@ -66,7 +67,7 @@ scan_gdsn <- function(node1, node2)
 			if (flag)
 				print(i1, all=TRUE)
 			else
-				cat(name.gdsn(i1, TRUE), "\n", sep="")
+				cat(fullname, "\n", sep="")
 		}
 
 		scan_gdsn(i1, i2)
@@ -90,11 +91,11 @@ main <- function()
 	cat(">>>> common\n")
 	scan_gdsn(f1$root, f2$root)
 
-	cat(">>>> ", files[1L], "\n", sep="")
+	cat("<<<< ", files[1L], "\n", sep="")
     if (length(file1_nodes))
     	cat(paste0(file1_nodes, "\n"))
 
-	cat(">>>> ", files[2L], "\n", sep="")
+	cat("<<<< ", files[2L], "\n", sep="")
 	if (length(file2_nodes))
 		cat(paste0(file2_nodes, "\n"))
 
