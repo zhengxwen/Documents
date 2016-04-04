@@ -49,18 +49,24 @@ scan_gdsn <- function(node1, node2)
 
 		if (!is.null(d1) & !is.null(d2))
 		{
+			cat("checking ", name.gdsn(i1, FALSE), " ...", sep="")
+
 			flag <- identical(d1, d2)
-			cat(ifelse(flag, "dim", "dim [error]"))
 			if (flag)
 			{
 				m1 <- digest.gdsn(i1, algo="md5", action="Robject")
 				m2 <- digest.gdsn(i2, algo="md5", action="Robject")
 				flag <- identical(m1, m2)
-				cat(ifelse(flag, ", md5 [OK]", " [OK], md5 [error]"))
+				cat(ifelse(flag, "\rdim, md5 [OK]", "\rdim [OK], md5 [error]"))
+			} else {
+				cat("\rdim [error]")
 			}
-			cat("\t", name.gdsn(i1, TRUE), sep="")
-			if (!flag) cat(" ****")
-			cat("\n")
+
+			cat("  ")
+			if (flag)
+				print(i1, all=TRUE)
+			else
+				cat(name.gdsn(i1, TRUE), "\n", sep="")
 		}
 
 		scan_gdsn(i1, i2)
