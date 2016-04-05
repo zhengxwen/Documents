@@ -1,6 +1,8 @@
 #! /usr/local/bin/Rscript --vanilla
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
+suppressPackageStartupMessages(library("parallel"))
+crayon.flag <- requireNamespace("crayon", quietly=TRUE)
 
 
 ####  define the options and parse  ####
@@ -26,6 +28,8 @@ files <- arguments$args
 
 ####  define the internal functions  ####
 
+ERROR <- if (crayon.flag) crayon::red else `c`
+
 common_nodes <- character()
 file1_nodes <- character()
 file2_nodes <- character()
@@ -45,7 +49,7 @@ scan_gdsn <- function(node1, node2)
 		i1 <- index.gdsn(node1, n)
 		i2 <- index.gdsn(node2, n)
 		d1 <- objdesp.gdsn(i1)$dim
-		d2 <- objdesp.gdsn(i1)$dim
+		d2 <- objdesp.gdsn(i2)$dim
 		fullname <- name.gdsn(i1, TRUE)
 
 		if (!is.null(d1) & !is.null(d2))
@@ -55,12 +59,21 @@ scan_gdsn <- function(node1, node2)
 			flag <- identical(d1, d2)
 			if (flag)
 			{
-				m1 <- digest.gdsn(i1, algo="md5", action="Robject")
-				m2 <- digest.gdsn(i2, algo="md5", action="Robject")
+				if (.Platform$OS.type == "windows")
+				{
+					m1 <- digest.gdsn(i1, algo="md5", action="Robject")
+					m2 <- digest.gdsn(i2, algo="md5", action="Robject")
+				} else {
+					v <- unlist(mclapply(list(i1, i2), FUN=function(x) {
+						digest.gdsn(x, algo="md5", action="Robject")
+					}, mc.cores=2L))
+					m1 <- v[1L]; m2 <- v[2L]
+				}
 				flag <- identical(m1, m2)
-				cat(ifelse(flag, "\rdim, md5 [OK]", "\rdim [OK], md5 [error]"))
+				cat(ifelse(flag, "\rdim, md5 [OK]",
+					paste0("\rdim [OK], md5 [", ERROR("error"), "]")))
 			} else {
-				cat("\rdim [error]")
+				cat("\rdim [", ERROR("error"), "]", sep="")
 			}
 
 			cat("  ")
@@ -84,8 +97,8 @@ main <- function()
 		stop("No input file, see \"diffgds -h\".")	
 
 	# open the files
-	f1 <- openfn.gds(files[1L])
-	f2 <- openfn.gds(files[2L])
+	f1 <- openfn.gds(files[1L], allow.fork=TRUE)
+	f2 <- openfn.gds(files[2L], allow.fork=TRUE)
 
 	# scan files
 	cat(">>>> common\n")
