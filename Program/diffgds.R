@@ -54,7 +54,7 @@ scan_gdsn <- function(node1, node2)
 
 		if (!is.null(d1) & !is.null(d2))
 		{
-			cat("checking ", fullname, " ...", sep="")
+			cat("checking md5, ", fullname, " ...", sep="")
 
 			flag <- identical(d1, d2)
 			if (flag)

@@ -42,10 +42,10 @@ option_list <- list(
 		help="Create a GDS node with the format TYPE:DIM:COMPRESSION[;TYPE2:DIM2:COMPRESSION2;...]\n\t\tE.g., -n NAME -c \"int:4,0:ZIP_RA.max\"",
 		metavar="format"),
 	make_option("--digest", type="character",
-		help="Create hash function digest for raw data field (ALGO can be md5, sha1, sha256, sha384 or sha512)",
+		help="Create hash function digest for R object ignoring compression (ALGO can be md5, sha1, sha256, sha384 or sha512)",
 		metavar="algo"),
 	make_option("--hash", type="character",
-		help="Create hash function digest for R object ignoring compression (ALGO can be md5, sha1, sha256, sha384 or sha512)",
+		help="Create hash function digest for raw data field (ALGO can be md5, sha1, sha256, sha384 or sha512)",
 		metavar="algo"),
 	make_option("--summary", action="store_true", default=FALSE,
 		help="Summarize a GDS node"),
@@ -85,111 +85,6 @@ BLURRED <- if (crayon.flag) crayon::blurred else `c`
 INVERSE <- if (crayon.flag) crayon::inverse else `c`
 UNDERLINE<- if (crayon.flag) crayon::underline else `c`
 
-
-# read and drop upper dimensions
-read <- function(node, start, count)
-{
-	v <- read.gdsn(node, start=start, count=count, simplify="none")
-	if (!is.null(dm <- dim(v)))
-	{
-		if (length(dm) > 2L)
-			dim(v) <- dm[c(1L,2L)]
-	}
-	if (is.factor(v)) v <- as.character(v)
-	v
-}
-
-
-# view 1-dim array
-view.dim1 <- function(dm, node)
-{
-	if (dm <= 0L)
-	{
-		s <- ""
-	} else if (dm <= nprev*2L)
-	{
-		s <- format(read.gdsn(node))
-	} else {
-		s <- format(c(read(node, 1L, nprev), read(node, dm-nprev+1L, nprev)))
-		s <- s[c(1L:nprev, NA, seq(nprev+1L, length(s)))]
-		s[nprev+1L] <- BLURRED("...")
-	}
-	cat(s, sep="\n")
-}
-
-# view 2-dim array
-view.dim2 <- function(dm, node, st=NULL)
-{
-	if (any(dm[1L] <= 0L, dm[2L] <= 0L))
-	{
-		cat("\n")
-		return(invisible())
-	}
-
-	cn <- rep(1L, length(st))
-	if (dm[1L] <= nprev*2L)
-	{
-		if (dm[2L] <= nprev*2L)
-		{
-			v <- read(node, c(1L,1L,st), c(-1L,-1L,cn))
-		} else {
-			v <- cbind(
-				read(node, c(1L,1L,st), c(-1L,nprev,cn)),
-				read(node, c(1L,dm[2L]-nprev+1L,st), c(-1L,nprev,cn))
-			)
-		}
-	} else {
-		if (dm[2L] <= nprev*2L)
-		{
-			v <- rbind(
-				read(node, c(1L,1L,st), c(nprev,-1L,cn)),
-				read(node, c(dm[1L]-nprev+1L,1L,st), c(nprev,-1L,cn))
-			)
-		} else {
-			v1 <- cbind(
-				read(node, c(1L,1L,st), c(nprev,nprev,cn)),
-				read(node, c(1L,dm[2L]-nprev+1L,st), c(nprev,nprev,cn))
-			)
-			v2 <- cbind(
-				read(node, c(dm[1L]-nprev+1L,1L,st), c(nprev,nprev,cn)),
-				read(node, c(dm[1L]-nprev+1L,dm[2L]-nprev+1L,st), c(nprev,nprev,cn))
-			)
-			v <- rbind(v1, v2)
-		}
-	}
-
-	s <- format(v)
-	if (dm[2L] > nprev*2L)
-	{
-		s <- s[, c(1L:nprev, NA, seq(nprev+1L,ncol(s))), drop=FALSE]
-		s[, nprev+1L] <- BLURRED("..")
-	}
-	if (dm[1L] > nprev*2L)
-	{
-		s <- s[c(1L:nprev, NA, seq(nprev+1L,nrow(s))), , drop=FALSE]
-		s[nprev+1L, ] <- ""
-		s[nprev+1L, 1L] <- BLURRED("......")
-	}
-
-	write.table(s, col.names=FALSE, row.names=FALSE, quote=FALSE)
-	invisible()
-}
-
-# view >2-dim array
-view.dim <- function(i, st, dm, node)
-{
-	if (i > length(dm))
-	{
-		cat(UNDERLINE(sprintf("[,,%s]:\n", paste(st, collapse=","))))
-		view.dim2(dm, node, st)
-	} else {
-		for (j in seq_len(min(dm[i], nprev)))
-		{
-			st2 <- c(st, j)
-			view.dim(i + 1L, st2, dm, node)
-		}
-	}
-}
 
 
 last.text <- function(s, len)
@@ -500,15 +395,7 @@ main <- function()
 				if (dp$is.array & !is.null(dp$dim))
 				{
 					cat(INVERSE("Preview:\n"))
-					if (length(dp$dim) == 1L)
-					{
-						view.dim1(dp$dim, node)
-					} else if (length(dp$dim) == 2L)
-					{
-						view.dim2(dp$dim, node)
-					} else {
-						view.dim(3L, NULL, dp$dim, node)
-					}
+					show(node)
 				}
 
 				if (opt$summary)
@@ -540,14 +427,14 @@ main <- function()
 			if (!is.null(opt$digest))
 			{
 				if (!opt$quiet)
-					cat(INVERSE(paste(opt$digest, "digest:")), "\n", sep="")
-				cat(digest.gdsn(node, opt$digest), "\n", sep="")
+					cat(INVERSE(paste(opt$digest, "digest of R object:")), "\n", sep="")
+				cat(digest.gdsn(node, opt$hash, action="Robject"), "\n", sep="")
 			}
 			if (!is.null(opt$hash))
 			{
 				if (!opt$quiet)
 					cat(INVERSE(paste(opt$hash, "digest:")), "\n", sep="")
-				cat(digest.gdsn(node, opt$hash, action="Robject"), "\n", sep="")
+				cat(digest.gdsn(node, opt$digest), "\n", sep="")
 			}
 		}
 
