@@ -28,21 +28,29 @@ files <- arguments$args
 
 ####  define the internal functions  ####
 
+hash <- "sha512"
+
 ERROR <- if (crayon.flag) crayon::red else `c`
+INVERSE <- if (crayon.flag) crayon::inverse else `c`
+OK <- if (crayon.flag) crayon::blue("OK") else "OK"
 
 common_nodes <- character()
 file1_nodes <- character()
 file2_nodes <- character()
 
 
-scan_gdsn <- function(node1, node2)
+scan_gdsn <- function(node1, node2, path)
 {
 	n1 <- ls.gdsn(node1, include.hidden=TRUE)
-	n2 <- ls.gdsn(node1, include.hidden=TRUE)
-
+	n2 <- ls.gdsn(node2, include.hidden=TRUE)
 	nn <- intersect(n1, n2)
-	file1_nodes <<- c(file1_nodes, setdiff(n1, nn))
-	file2_nodes <<- c(file2_nodes, setdiff(n2, nn))
+
+	s <- setdiff(n1, nn)
+	if (length(s) > 0L)
+		file1_nodes <<- c(file1_nodes, paste0(path, s))
+	s <- setdiff(n2, nn)
+	if (length(s) > 0L)
+		file2_nodes <<- c(file2_nodes, paste0(path, s))
 
 	for (n in nn)
 	{
@@ -54,24 +62,25 @@ scan_gdsn <- function(node1, node2)
 
 		if (!is.null(d1) & !is.null(d2))
 		{
-			cat("checking md5, ", fullname, " ...", sep="")
+			cat("checking ", hash, ", ", fullname, " ...", sep="")
 
 			flag <- identical(d1, d2)
 			if (flag)
 			{
 				if (.Platform$OS.type == "windows")
 				{
-					m1 <- digest.gdsn(i1, algo="md5", action="Robject")
-					m2 <- digest.gdsn(i2, algo="md5", action="Robject")
+					m1 <- digest.gdsn(i1, algo=hash, action="Robject")
+					m2 <- digest.gdsn(i2, algo=hash, action="Robject")
 				} else {
 					v <- unlist(mclapply(list(i1, i2), FUN=function(x) {
-						digest.gdsn(x, algo="md5", action="Robject")
+						digest.gdsn(x, algo=hash, action="Robject")
 					}, mc.cores=2L))
 					m1 <- v[1L]; m2 <- v[2L]
 				}
 				flag <- identical(m1, m2)
-				cat(ifelse(flag, "\rdim, md5 [OK]",
-					paste0("\rdim [OK], md5 [", ERROR("error"), "]")))
+				cat(ifelse(flag,
+					paste0("\rdim, ", hash, " [", OK, "]"),
+					paste0("\rdim [OK], ", hash, " [", ERROR("error"), "]")))
 			} else {
 				cat("\rdim [", ERROR("error"), "]", sep="")
 			}
@@ -83,7 +92,7 @@ scan_gdsn <- function(node1, node2)
 				cat(fullname, "\n", sep="")
 		}
 
-		scan_gdsn(i1, i2)
+		scan_gdsn(i1, i2, paste0(path, n, "/"))
 	}
 }
 
@@ -101,16 +110,16 @@ main <- function()
 	f2 <- openfn.gds(files[2L], allow.fork=TRUE)
 
 	# scan files
-	cat(">>>> common\n")
-	scan_gdsn(f1$root, f2$root)
+	cat(INVERSE(">>>> common"), "\n", sep="")
+	scan_gdsn(f1$root, f2$root, "")
 
-	cat("<<<< ", files[1L], "\n", sep="")
-    if (length(file1_nodes))
-    	cat(paste0(file1_nodes, "\n"))
+	cat(INVERSE(paste0("<<<< ", files[1L])), "\n", sep="")
+	for (nm in file1_nodes)
+    	print(index.gdsn(f1, nm), expand=FALSE)
 
-	cat("<<<< ", files[2L], "\n", sep="")
-	if (length(file2_nodes))
-		cat(paste0(file2_nodes, "\n"))
+	cat(INVERSE(paste0("<<<< ", files[2L])), "\n", sep="")
+	for (nm in file2_nodes)
+    	print(index.gdsn(f2, nm), expand=FALSE)
 
 	# close the files
 	closefn.gds(f1)
