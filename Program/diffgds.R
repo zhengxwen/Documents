@@ -113,11 +113,11 @@ main <- function()
 	cat(INVERSE(">>>> common"), "\n", sep="")
 	scan_gdsn(f1$root, f2$root, "")
 
-	cat(INVERSE(paste0("<<<< ", files[1L])), "\n", sep="")
+	cat(INVERSE(paste0("<<<< ", basename(files[1L]))), "\n", sep="")
 	for (nm in file1_nodes)
     	print(index.gdsn(f1, nm), expand=FALSE)
 
-	cat(INVERSE(paste0("<<<< ", files[2L])), "\n", sep="")
+	cat(INVERSE(paste0("<<<< ", basename(files[2L]))), "\n", sep="")
 	for (nm in file2_nodes)
     	print(index.gdsn(f2, nm), expand=FALSE)
 
