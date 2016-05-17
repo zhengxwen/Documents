@@ -67,7 +67,7 @@ option_list <- list(
 		help="No screen output"),
 	make_option("--clean", action="store_true", default=FALSE,
 		help="Clean up the fragments of GDS file"),
-	make_option(c("-v", "--version", action="store_true", default=FALSE,
+	make_option(c("-v", "--version"), action="store_true", default=FALSE,
 		help="Show version")
 )
 parser <- OptionParser(usage="%prog [options] file1 [file2] [file3]",
@@ -143,7 +143,7 @@ main <- function()
 
 	if (opt$system)
 	{
-		v <- c(package.version = as.character(packageVersion("gdsfmt")),
+		v <- c(package.version=as.character(packageVersion("gdsfmt")),
 			system.gds())
 		print(v)
 	}
