@@ -66,7 +66,9 @@ option_list <- list(
 	make_option(c("-q", "--quiet"), action="store_true", default=FALSE,
 		help="No screen output"),
 	make_option("--clean", action="store_true", default=FALSE,
-		help="Clean up the fragments of GDS file")
+		help="Clean up the fragments of GDS file"),
+	make_option(c("-v", "--version", action="store_true", default=FALSE,
+		help="Show version")
 )
 parser <- OptionParser(usage="%prog [options] file1 [file2] [file3]",
 	option_list=option_list)
@@ -133,6 +135,12 @@ do_clean <- function()
 
 main <- function()
 {
+	if (opt$version)
+	{
+		cat("viewgds 0.9.0\n")
+		return(invisible())
+	}
+
 	if (opt$system)
 	{
 		v <- c(package.version = as.character(packageVersion("gdsfmt")),
@@ -543,8 +551,6 @@ main <- function()
 
 main <- cmpfun(main)
 res <- try(main())
-v <- warnings()
-if (!is.null(v)) cat(v, file=stderr(), sep="\n")
 
 # quit
 q(status = ifelse(inherits(res, "try-error"), 1L, 0L))
