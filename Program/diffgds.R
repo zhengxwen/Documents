@@ -107,7 +107,8 @@ main <- function()
 	if (opt$version)
 	{
 		cat("diffgds_0.9.1\n")
-		cat("gdsfmt_", packageVersion("gdsfmt"), "\n", sep="")
+		cat("R_", as.character(getRversion()), "\n", sep="")
+		cat("gdsfmt_", as.character(packageVersion("gdsfmt")), "\n", sep="")
 		return(invisible())
 	}
 
