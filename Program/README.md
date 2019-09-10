@@ -16,13 +16,11 @@ biocLite("gdsfmt")
 
 Installation with command line,
 ```sh
-echo '#!' `which Rscript` '--vanilla' > viewgds
-curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
+curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R > viewgds
 chmod +x viewgds
 
 ## Or
-echo '#!' `which Rscript` '--vanilla' > viewgds
-wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R >> viewgds
+wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/viewgds.R > viewgds
 chmod +x viewgds
 ```
 
@@ -94,13 +92,11 @@ biocLite("gdsfmt")
 
 Installation with command line,
 ```sh
-echo '#!' `which Rscript` '--vanilla' > diffgds
-curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R >> diffgds
+curl -L https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R > diffgds
 chmod +x diffgds
 
 ## Or
-echo '#!' `which Rscript` '--vanilla' > diffgds
-wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R >> diffgds
+wget -qO- --no-check-certificate https://raw.githubusercontent.com/zhengxwen/Documents/master/Program/diffgds.R > diffgds
 chmod +x diffgds
 ```
 

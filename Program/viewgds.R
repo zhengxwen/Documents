@@ -1,4 +1,4 @@
-#! /usr/local/bin/Rscript --vanilla
+#!/usr/bin/env Rscript --vanilla
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("gdsfmt"))
 suppressPackageStartupMessages(library("compiler"))
@@ -137,7 +137,8 @@ main <- function()
 {
 	if (opt$version)
 	{
-		cat("viewgds 0.9.0\n")
+		cat("viewgds_0.9.1\n")
+		cat("gdsfmt_", packageVersion("gdsfmt"), "\n", sep="")
 		return(invisible())
 	}
 
